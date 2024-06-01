@@ -156,6 +156,10 @@ ${JSON.stringify(config, null, 2)}`
       data,
     });
   }
+
+  kill() {
+    this.childProcess.kill();
+  }
   
   private handleSudoRequests(process: ChildProcess) {
     // Listen for incoming sudo incoming sudo requests
