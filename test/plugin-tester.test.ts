@@ -97,7 +97,7 @@ describe('Plugin tester integration tests', () => {
     const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
 
     // No expect needed here. This passes if it doesn't throw.
-    await plugin.test([{
+    await plugin.fullTest([{
       type: 'test',
       propA: 'a',
       propB: 10,
@@ -108,5 +108,29 @@ describe('Plugin tester integration tests', () => {
       propB: 10,
       propC: 'c',
     }]);
+  })
+
+  it('Has helpers that can uninstall a resource', async () => {
+    const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
+
+    // No expect needed here. This passes if it doesn't throw.
+    await plugin.uninstall([{
+      type: 'test-uninstall',
+      propA: 'a',
+      propB: 10,
+      propC: 'c',
+    }]);
+  })
+
+  it('Has helpers that can uninstall a resource (errors out when unsuccessful)', async () => {
+    const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
+
+    // No expect needed here. This passes if it doesn't throw.
+    expect(async () => plugin.uninstall([{
+      type: 'test',
+      propA: 'a',
+      propB: 10,
+      propC: 'c',
+    }])).rejects.toThrowError();
   })
 })

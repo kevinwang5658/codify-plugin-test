@@ -37,11 +37,36 @@ export class TestResource extends Resource<TestConfig> {
   }
 }
 
+export class TestUninstallResource extends Resource<TestConfig> {
+  constructor() {
+    super({
+      type: 'test-uninstall'
+    });
+  }
+
+  async applyCreate(plan: Plan<TestConfig>): Promise<void> {}
+
+  async applyDestroy(plan: Plan<TestConfig>): Promise<void> {}
+
+  async refresh(keys: Map<string, unknown>): Promise<Partial<TestConfig> | null> {
+    return null;
+  }
+
+  async validateResource(config: unknown): Promise<ValidationResult> {
+    return {
+      isValid: true
+    }
+  }
+}
+
 function buildPlugin(): Plugin {
   const resourceMap = new Map();
 
   const testResource = new TestResource();
   resourceMap.set(testResource.typeId, testResource);
+
+  const testUninstallResource = new TestUninstallResource();
+  resourceMap.set(testUninstallResource.typeId, testUninstallResource);
 
   return new Plugin('test', resourceMap);
 }

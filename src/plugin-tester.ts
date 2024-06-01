@@ -1,13 +1,21 @@
 import Ajv2020 from 'ajv/dist/2020.js';
 import {
-  ApplyRequestData, InitializeResponseData, IpcMessageSchema,
+  ApplyRequestData,
+  InitializeResponseData,
+  IpcMessageSchema,
   MessageCmd,
+  ParameterOperation,
   PlanRequestData,
-  PlanResponseData, ResourceConfig, ResourceOperation,
+  PlanResponseData,
+  ResourceConfig,
+  ResourceOperation,
   SpawnStatus,
-  SudoRequestData, SudoRequestDataSchema, ValidateRequestData, ValidateResponseData
+  SudoRequestData,
+  SudoRequestDataSchema,
+  ValidateRequestData,
+  ValidateResponseData
 } from 'codify-schemas';
-import { ChildProcess, SpawnOptions, fork, spawn } from 'node:child_process';
+import { ChildProcess, fork, spawn, SpawnOptions } from 'node:child_process';
 
 import { CodifyTestUtils } from './test-utils.js';
 import path from 'node:path';
@@ -45,7 +53,7 @@ export class PluginTester {
     this.handleSudoRequests(this.childProcess);
   }
 
-  async test(configs: ResourceConfig[]): Promise<void> {
+  async fullTest(configs: ResourceConfig[]): Promise<void> {
     const initializeResult = await this.initialize();
 
     const unsupportedConfigs = configs.filter((c)  =>
@@ -81,7 +89,39 @@ export class PluginTester {
 
     const unsuccessfulPlans = validationPlans.filter((p) => p.operation !== ResourceOperation.NOOP);
     if (unsuccessfulPlans.length > 0) {
-      throw new Error(`The following applies were not successful.\n ${JSON.stringify(unsuccessfulPlans, null, 2)}`)
+      throw new Error(`The following applies were not successful. Re-running plan shows that the resources did not return no-op but instead returned:
+${JSON.stringify(unsuccessfulPlans, null, 2)}`
+      )
+    }
+  }
+
+  async uninstall(configs: ResourceConfig[]) {
+    for (const config of configs) {
+      const { type, dependsOn, name, ...parameters } = config
+
+      await this.apply({
+        plan: {
+          operation: ResourceOperation.DESTROY,
+          resourceType: config.type,
+          parameters: Object.entries(parameters).map(([key, value]) => ({
+            name: key,
+            previousValue: value,
+            newValue: null,
+            operation: ParameterOperation.REMOVE,
+          })),
+        }
+      });
+
+      // Validate that the destroy was successful
+      const validationPlan = await this.plan(config);
+      if (validationPlan.operation !== ResourceOperation.CREATE) {
+        throw new Error(`Resource ${config.type} was not successfully destroyed.
+Validation plan shows:
+${JSON.stringify(validationPlan, null, 2)}
+Previous config:
+${JSON.stringify(config, null, 2)}`
+        );
+      }
     }
   }
 

@@ -1,24 +1,25 @@
 {
   "compilerOptions": {
-    "declaration": true,
     "module": "NodeNext",
-    "moduleResolution": "Node16",
+    "moduleResolution": "NodeNext",
+    "sourceMap": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "jsx": "react",
-    "outDir": "dist",
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "removeComments": true,
+    "strictNullChecks": true,
+    "declaration": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "rootDir": "src",
-    "strict": true,
-    "target": "es2022"
+    "outDir": "./dist"
   },
-  "include": [
-    "src/**/*"
-  ],
   "exclude": [
-    "src/**/*.test.ts",
-    "node_modules"
+    "node_modules",
+    "src/**/*.test.ts"
   ],
-  "ts-node": {
-    "esm": true
-  }
+  "include": [
+    "src/**/*.ts"
+  ]
 }
