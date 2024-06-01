@@ -1,0 +1,9 @@
+[
+  {
+    "type": "nvm",
+    "global": "18.20",
+    "nodeVersions": [
+      "18.20"
+    ]
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "extends": [
+    "oclif",
+    "oclif-typescript",
+    "prettier"
+  ],
+  "rules": {
+    "object-curly-spacing": [
+      "warn",
+      "always"
+    ],
+    "perfectionist/sort-classes": [
+      "off"
+    ],
+    "quotes": [
+      "error",
+      "single"
+    ]
+  },
+  "ignorePatterns": [
+    "*.test.ts"
+  ]
+}
