@@ -15,10 +15,10 @@ import {
   ValidateRequestData,
   ValidateResponseData
 } from 'codify-schemas';
-import { ChildProcess, fork, spawn, SpawnOptions } from 'node:child_process';
+import { ChildProcess, SpawnOptions, fork, spawn } from 'node:child_process';
+import path from 'node:path';
 
 import { CodifyTestUtils } from './test-utils.js';
-import path from 'node:path';
 
 const ajv = new Ajv2020.default({
   strict: true
@@ -53,7 +53,7 @@ export class PluginTester {
     this.handleSudoRequests(this.childProcess);
   }
 
-  async fullTest(configs: ResourceConfig[]): Promise<void> {
+  async fullTest(configs: ResourceConfig[], assertPlans?: (plans: PlanResponseData[]) => void): Promise<void> {
     const initializeResult = await this.initialize();
 
     const unsupportedConfigs = configs.filter((c)  =>
@@ -73,6 +73,10 @@ export class PluginTester {
     const plans = [];
     for (const config of configs) {
       plans.push(await this.plan(config));
+    }
+
+    if (assertPlans) {
+      assertPlans(plans);
     }
 
     for (const plan of plans) {
@@ -97,25 +101,25 @@ ${JSON.stringify(unsuccessfulPlans, null, 2)}`
 
   async uninstall(configs: ResourceConfig[]) {
     for (const config of configs) {
-      const { type, dependsOn, name, ...parameters } = config
+      const { dependsOn, name, type, ...parameters } = config
 
       await this.apply({
         plan: {
           operation: ResourceOperation.DESTROY,
-          resourceType: config.type,
           parameters: Object.entries(parameters).map(([key, value]) => ({
             name: key,
-            previousValue: value,
             newValue: null,
             operation: ParameterOperation.REMOVE,
+            previousValue: value,
           })),
+          resourceType: type,
         }
       });
 
       // Validate that the destroy was successful
       const validationPlan = await this.plan(config);
       if (validationPlan.operation !== ResourceOperation.CREATE) {
-        throw new Error(`Resource ${config.type} was not successfully destroyed.
+        throw new Error(`Resource ${type} was not successfully destroyed.
 Validation plan shows:
 ${JSON.stringify(validationPlan, null, 2)}
 Previous config:
@@ -190,8 +194,6 @@ type CodifySpawnOptions = {
  *
  * @param cmd Command to run. Ex: `rm -rf`
  * @param opts Options for spawn
- * @param secureMode Secure mode for sudo
- * @param pluginName Optional plugin name so that stdout and stderr can be piped
  *
  * @see promiseSpawn
  * @see spawn

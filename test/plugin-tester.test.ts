@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { PluginTester } from '../src/plugin-tester.js';
+import { PluginTester } from '../src/index.js';
 import path from 'node:path';
 import { ResourceOperation } from 'codify-schemas/src/types/index.js';
-import { ParameterOperation } from 'codify-schemas';
 
 describe('Plugin tester integration tests', () => {
   it('Can instantiate a plugin', async () => {
@@ -13,7 +12,7 @@ describe('Plugin tester integration tests', () => {
     expect(plugin.childProcess.stderr).to.not.be.undefined;
     expect(plugin.childProcess.channel).to.not.be.undefined;
 
-    await plugin.initialize({});
+    await plugin.initialize();
   })
 
   it('Can validate a config', async () => {
@@ -108,6 +107,35 @@ describe('Plugin tester integration tests', () => {
       propB: 10,
       propC: 'c',
     }]);
+  })
+
+  it('Full test supports plan assertions to ensure the generated plan is correct', async () => {
+    const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
+
+    // No expect needed here. This passes if it doesn't throw.
+    await plugin.fullTest([{
+      type: 'test',
+      propA: 'a',
+      propB: 10,
+      propC: 'c',
+    }, {
+      type: 'test',
+      propA: 'a',
+      propB: 10,
+      propC: 'c',
+    }], (plans) => {
+      expect(plans[0]).toMatchObject({
+        planId: expect.any(String),
+        operation: ResourceOperation.NOOP,
+        resourceType: 'test',
+      });
+
+      expect(plans[1]).toMatchObject({
+        planId: expect.any(String),
+        operation: ResourceOperation.NOOP,
+        resourceType: 'test',
+      });
+    });
   })
 
   it('Has helpers that can uninstall a resource', async () => {
