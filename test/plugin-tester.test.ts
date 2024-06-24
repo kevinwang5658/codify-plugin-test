@@ -27,7 +27,7 @@ describe('Plugin tester integration tests', () => {
       }]
     })
 
-    expect(result.validationResults).toMatchObject([{
+    expect(result.resourceValidations).toMatchObject([{
       isValid: true,
     }])
   })

@@ -1,7 +1,7 @@
-import { Plan, Plugin, Resource, ValidationResult, runPlugin } from 'codify-plugin-lib';
+import { Plugin, Resource, runPlugin } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
-export interface TestConfig extends StringIndexedObject{
+export interface TestConfig extends StringIndexedObject {
   propA: string;
   propB: number;
   propC: string;
@@ -14,12 +14,12 @@ export class TestResource extends Resource<TestConfig> {
     });
   }
 
-  async applyCreate(plan: Plan<TestConfig>): Promise<void> {}
+  async applyCreate(): Promise<void> {}
 
-  async applyDestroy(plan: Plan<TestConfig>): Promise<void> {}
+  async applyDestroy(): Promise<void> {}
 
-  async refresh(keys: Map<string, unknown>): Promise<Partial<TestConfig> | null> {
-    if (keys.has('propD')) {
+  async refresh(parameters: Partial<TestConfig>): Promise<Partial<TestConfig> | null> {
+    if (parameters.propD) {
       throw new Error('Prop D is included');
     }
 
@@ -28,12 +28,6 @@ export class TestResource extends Resource<TestConfig> {
       propB: 10,
       propC: 'c',
     };
-  }
-
-  async validateResource(config: unknown): Promise<ValidationResult> {
-    return {
-      isValid: true
-    }
   }
 }
 
@@ -44,18 +38,12 @@ export class TestUninstallResource extends Resource<TestConfig> {
     });
   }
 
-  async applyCreate(plan: Plan<TestConfig>): Promise<void> {}
+  async applyCreate(): Promise<void> {}
 
-  async applyDestroy(plan: Plan<TestConfig>): Promise<void> {}
+  async applyDestroy(): Promise<void> {}
 
-  async refresh(keys: Map<string, unknown>): Promise<Partial<TestConfig> | null> {
+  async refresh(): Promise<Partial<TestConfig> | null> {
     return null;
-  }
-
-  async validateResource(config: unknown): Promise<ValidationResult> {
-    return {
-      isValid: true
-    }
   }
 }
 

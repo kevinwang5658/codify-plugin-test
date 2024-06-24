@@ -65,7 +65,7 @@ export class PluginTester {
 
     const validate = await this.validate({ configs });
 
-    const invalidConfigs = validate.validationResults.filter((v) => !v.isValid)
+    const invalidConfigs = validate.resourceValidations.filter((v) => !v.isValid)
     if (invalidConfigs.length > 0) {
       throw new Error(`The following configs did not validate:\n ${JSON.stringify(invalidConfigs, null, 2)}`)
     }
