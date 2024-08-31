@@ -1,4 +1,4 @@
-import Ajv2020 from 'ajv/dist/2020.js';
+import Ajv from 'ajv';
 import {
   ApplyRequestData,
   InitializeResponseData,
@@ -20,7 +20,7 @@ import path from 'node:path';
 
 import { CodifyTestUtils } from './test-utils.js';
 
-const ajv = new Ajv2020.default({
+const ajv = new Ajv.default({
   strict: true
 });
 const ipcMessageValidator = ajv.compile(IpcMessageSchema);
@@ -72,7 +72,11 @@ export class PluginTester {
 
     const plans = [];
     for (const config of configs) {
-      plans.push(await this.plan(config));
+      plans.push(await this.plan({
+        desired: config,
+        isStateful: false,
+        state: undefined,
+      }));
     }
 
     if (assertPlans) {
@@ -88,7 +92,11 @@ export class PluginTester {
     // Check that all applys were successful by re-planning
     const validationPlans = [];
     for (const config of configs) {
-      validationPlans.push(await this.plan(config));
+      validationPlans.push(await this.plan({
+        desired: config,
+        isStateful: false,
+        state: undefined,
+      }));
     }
 
     const unsuccessfulPlans = validationPlans.filter((p) => p.operation !== ResourceOperation.NOOP);
@@ -117,7 +125,11 @@ ${JSON.stringify(unsuccessfulPlans, null, 2)}`
       });
 
       // Validate that the destroy was successful
-      const validationPlan = await this.plan(config);
+      const validationPlan = await this.plan({
+        desired: config,
+        state: undefined,
+        isStateful: false,
+      });
       if (validationPlan.operation !== ResourceOperation.CREATE) {
         throw new Error(`Resource ${type} was not successfully destroyed.
 Validation plan shows:

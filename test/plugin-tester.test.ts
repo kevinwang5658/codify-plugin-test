@@ -36,10 +36,14 @@ describe('Plugin tester integration tests', () => {
     const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
 
     const result = await plugin.plan({
-      type: 'test',
-      propA: 'a',
-      propB: 10,
-      propC: 'c',
+      desired: {
+        type: 'test',
+        propA: 'a',
+        propB: 10,
+        propC: 'c',
+      },
+      state: undefined,
+      isStateful: false,
     })
 
     expect(result).toMatchObject({
@@ -53,10 +57,14 @@ describe('Plugin tester integration tests', () => {
     const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
 
     const result = await plugin.plan({
-      type: 'test',
-      propA: 'a',
-      propB: 10,
-      propC: 'c',
+      desired: {
+        type: 'test',
+        propA: 'a',
+        propB: 10,
+        propC: 'c',
+      },
+      state: undefined,
+      isStateful: false,
     })
 
     expect(result).toMatchObject({
@@ -70,10 +78,14 @@ describe('Plugin tester integration tests', () => {
     const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
 
     const plan = await plugin.plan({
-      type: 'test',
-      propA: 'a',
-      propB: 10,
-      propC: 'c',
+      desired: {
+        type: 'test',
+        propA: 'a',
+        propB: 10,
+        propC: 'c',
+      },
+      state: undefined,
+      isStateful: false,
     })
 
     // No expect needed here. This passes if it doesn't throw.
@@ -84,11 +96,15 @@ describe('Plugin tester integration tests', () => {
     const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
 
     expect(async () => plugin.plan({
-      type: 'test',
-      propA: 'a',
-      propB: 10,
-      propC: 'c',
-      propD: 'any'
+      desired: {
+        type: 'test',
+        propA: 'a',
+        propB: 10,
+        propC: 'c',
+        propD: 'any'
+      },
+      state: undefined,
+      isStateful: false,
     })).rejects.toThrowError(new Error('Prop D is included'));
   })
 

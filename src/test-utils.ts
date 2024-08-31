@@ -1,8 +1,8 @@
-import Ajv2020 from 'ajv/dist/2020.js';
+import Ajv from 'ajv';
 import { IpcMessage, IpcMessageSchema, MessageStatus } from 'codify-schemas';
 import { ChildProcess } from 'node:child_process';
 
-const ajv = new Ajv2020.default({
+const ajv = new Ajv.default({
   strict: true
 });
 const ipcMessageValidator = ajv.compile(IpcMessageSchema);
