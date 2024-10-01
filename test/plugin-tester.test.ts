@@ -139,7 +139,7 @@ describe('Plugin tester integration tests', () => {
       propA: 'a',
       propB: 10,
       propC: 'c',
-    }], (plans) => {
+    }], false, (plans) => {
       expect(plans[0]).toMatchObject({
         planId: expect.any(String),
         operation: ResourceOperation.NOOP,

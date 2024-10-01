@@ -4,7 +4,6 @@ import {
   InitializeResponseData,
   IpcMessageSchema,
   MessageCmd,
-  ParameterOperation,
   PlanRequestData,
   PlanResponseData,
   ResourceConfig,
@@ -53,7 +52,7 @@ export class PluginTester {
     this.handleSudoRequests(this.childProcess);
   }
 
-  async fullTest(configs: ResourceConfig[], assertPlans?: (plans: PlanResponseData[]) => void): Promise<void> {
+  async fullTest(configs: ResourceConfig[], skipUninstall = false, assertPlans?: (plans: PlanResponseData[]) => void): Promise<void> {
     const initializeResult = await this.initialize();
 
     const unsupportedConfigs = configs.filter((c)  =>
@@ -105,38 +104,45 @@ export class PluginTester {
 ${JSON.stringify(unsuccessfulPlans, null, 2)}`
       )
     }
+
+    if (!skipUninstall) {
+      await this.uninstall(configs.toReversed());
+    }
   }
 
   async uninstall(configs: ResourceConfig[]) {
+    const plans = [];
+
     for (const config of configs) {
-      const { dependsOn, name, type, ...parameters } = config
+      plans.push(await this.plan({
+        desired: undefined,
+        isStateful: true,
+        state: config
+      }))
+    }
+
+    for (const plan of plans) {
+      if (plan.operation !== ResourceOperation.DESTROY) {
+        throw new Error(`Expect resource operation to be 'destory' but instead received plan: \n ${JSON.stringify(plan, null, 2)}`)
+      }
 
       await this.apply({
-        plan: {
-          operation: ResourceOperation.DESTROY,
-          parameters: Object.entries(parameters).map(([key, value]) => ({
-            name: key,
-            newValue: null,
-            operation: ParameterOperation.REMOVE,
-            previousValue: value,
-          })),
-          resourceType: type,
-        }
+        planId: plan.planId
       });
+    }
 
-      // Validate that the destroy was successful
+    // Validate that the destroy was successful
+    for (const config of configs) {
       const validationPlan = await this.plan({
         desired: config,
-        state: undefined,
-        isStateful: false,
-      });
+        isStateful: true,
+        state: undefined
+      })
       if (validationPlan.operation !== ResourceOperation.CREATE) {
-        throw new Error(`Resource ${type} was not successfully destroyed.
+        throw new Error(`Resource was not successfully destroyed.
 Validation plan shows:
 ${JSON.stringify(validationPlan, null, 2)}
-Previous config:
-${JSON.stringify(config, null, 2)}`
-        );
+        `);
       }
     }
   }
