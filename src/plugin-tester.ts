@@ -50,7 +50,7 @@ export class PluginTester {
       [],
       {
         // Use default true to test plugins in secure mode (un-able to request sudo directly)
-        detached: true,
+        // detached: true,
         env: { ...process.env },
         execArgv: ['--import', 'tsx/esm', '--inspect=9221'],
       },
@@ -61,16 +61,16 @@ export class PluginTester {
 
   async fullTest(
     configs: ResourceConfig[],
-    {
-      skipUninstall = false,
-      ...options
-    }: {
-      skipUninstall: boolean,
+    options?: {
+      skipUninstall?: boolean,
       validatePlan?: (plans: PlanResponseData[]) => Promise<void> | void
       validateApply?: (plans: PlanResponseData[]) => Promise<void> | void,
       validateDestroy?: (plans: PlanResponseData[]) => Promise<void> | void,
       validateImport?: (importResults: (ImportResponseData['result'][0])[]) => Promise<void> | void,
   }): Promise<void> {
+    const {
+      skipUninstall = false,
+    } = options ?? {}
 
     const initializeResult = await this.initialize();
 
@@ -97,7 +97,7 @@ export class PluginTester {
       }));
     }
 
-    if (options.validatePlan) {
+    if (options?.validatePlan) {
       await options.validatePlan(plans);
     }
 
@@ -124,7 +124,7 @@ ${JSON.stringify(unsuccessfulPlans, null, 2)}`
       )
     }
 
-    if (options.validateApply) {
+    if (options?.validateApply) {
       await options.validateApply(plans);
     }
 
@@ -146,7 +146,7 @@ ${JSON.stringify(unsuccessfulPlans, null, 2)}`
 ${JSON.stringify(unsuccessfulImports, null, 2)}`);
     }
 
-    if (options.validateImport) {
+    if (options?.validateImport) {
       await options.validateImport(importResults.map((r) => r.result[0]));
     }
 
@@ -155,7 +155,7 @@ ${JSON.stringify(unsuccessfulImports, null, 2)}`);
     }
   }
 
-  async uninstall(configs: ResourceConfig[], options: {
+  async uninstall(configs: ResourceConfig[], options?: {
     validateDestroy?: (plans: PlanResponseData[]) => Promise<void> | void
   }) {
     const plans = [];
@@ -193,7 +193,7 @@ ${JSON.stringify(validationPlan, null, 2)}
       }
     }
 
-    if (options.validateDestroy) {
+    if (options?.validateDestroy) {
       await options.validateDestroy(plans);
     }
   }
