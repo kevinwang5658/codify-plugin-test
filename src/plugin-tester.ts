@@ -45,7 +45,7 @@ export class PluginTester {
         // Use default true to test plugins in secure mode (un-able to request sudo directly)
         detached: true,
         env: { ...process.env },
-        execArgv: ['--import', 'tsx/esm'],
+        execArgv: ['--import', 'tsx/esm', '--inspect=9221'],
       },
     )
 
