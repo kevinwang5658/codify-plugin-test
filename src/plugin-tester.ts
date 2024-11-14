@@ -1,6 +1,8 @@
 import Ajv from 'ajv';
 import {
   ApplyRequestData,
+  ImportRequestData,
+  ImportResponseData,
   InitializeResponseData,
   IpcMessageSchema,
   MessageCmd,
@@ -15,6 +17,7 @@ import {
   ValidateResponseData
 } from 'codify-schemas';
 import { ChildProcess, SpawnOptions, fork, spawn } from 'node:child_process';
+import inspector from 'node:inspector'
 import path from 'node:path';
 
 import { CodifyTestUtils } from './test-utils.js';
@@ -24,6 +27,7 @@ const ajv = new Ajv.default({
 });
 const ipcMessageValidator = ajv.compile(IpcMessageSchema);
 const sudoRequestValidator = ajv.compile(SudoRequestDataSchema);
+
 
 export class PluginTester {
   childProcess: ChildProcess
@@ -37,6 +41,9 @@ export class PluginTester {
     if (!path.isAbsolute(pluginPath)) {
       throw new Error('A fully qualified path must be supplied to PluginTester');
     }
+
+    console.log('Node Inspector:')
+    console.log(inspector.url());
 
     this.childProcess = fork(
       pluginPath,
@@ -52,7 +59,19 @@ export class PluginTester {
     this.handleSudoRequests(this.childProcess);
   }
 
-  async fullTest(configs: ResourceConfig[], skipUninstall = false, assertPlans?: (plans: PlanResponseData[]) => void): Promise<void> {
+  async fullTest(
+    configs: ResourceConfig[],
+    {
+      skipUninstall = false,
+      ...options
+    }: {
+      skipUninstall: boolean,
+      validatePlan?: (plans: PlanResponseData[]) => Promise<void> | void
+      validateApply?: (plans: PlanResponseData[]) => Promise<void> | void,
+      validateDestroy?: (plans: PlanResponseData[]) => Promise<void> | void,
+      validateImport?: (importResults: (ImportResponseData['result'][0])[]) => Promise<void> | void,
+  }): Promise<void> {
+
     const initializeResult = await this.initialize();
 
     const unsupportedConfigs = configs.filter((c)  =>
@@ -78,8 +97,8 @@ export class PluginTester {
       }));
     }
 
-    if (assertPlans) {
-      assertPlans(plans);
+    if (options.validatePlan) {
+      await options.validatePlan(plans);
     }
 
     for (const plan of plans) {
@@ -105,12 +124,40 @@ ${JSON.stringify(unsuccessfulPlans, null, 2)}`
       )
     }
 
+    if (options.validateApply) {
+      await options.validateApply(plans);
+    }
+
+    const importResults = [];
+    const unsuccessfulImports = [];
+    for (const config of configs) {
+      const importResult = await this.import({ config })
+      importResults.push(importResult);
+
+      if (importResult.result.length !== 1 ||
+        Object.entries(config).some(([k, v]) => importResult.result[0][k] !== v)
+      ) {
+        unsuccessfulImports.push(importResult);
+      }
+    }
+
+    if (unsuccessfulImports.length > 0) {
+      throw new Error(`The following imports were not successful. The imports differed from the original.
+${JSON.stringify(unsuccessfulImports, null, 2)}`);
+    }
+
+    if (options.validateImport) {
+      await options.validateImport(importResults.map((r) => r.result[0]));
+    }
+
     if (!skipUninstall) {
-      await this.uninstall(configs.toReversed());
+      await this.uninstall(configs.toReversed(), options);
     }
   }
 
-  async uninstall(configs: ResourceConfig[]) {
+  async uninstall(configs: ResourceConfig[], options: {
+    validateDestroy?: (plans: PlanResponseData[]) => Promise<void> | void
+  }) {
     const plans = [];
 
     for (const config of configs) {
@@ -145,6 +192,10 @@ ${JSON.stringify(validationPlan, null, 2)}
         `);
       }
     }
+
+    if (options.validateDestroy) {
+      await options.validateDestroy(plans);
+    }
   }
 
   async initialize(): Promise<InitializeResponseData> {
@@ -171,6 +222,13 @@ ${JSON.stringify(validationPlan, null, 2)}
   async apply(data: ApplyRequestData): Promise<void> {
     return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'apply',
+      data,
+    });
+  }
+
+  async import(data: ImportRequestData): Promise<ImportResponseData> {
+    return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
+      cmd: 'import',
       data,
     });
   }
