@@ -64,6 +64,10 @@ export class PluginTester {
       validateApply?: (plans: PlanResponseData[]) => Promise<void> | void,
       validateDestroy?: (plans: PlanResponseData[]) => Promise<void> | void,
       validateImport?: (importResults: (ImportResponseData['result'][0])[]) => Promise<void> | void,
+      testModify?: {
+        configs: ResourceConfig[],
+        validate?: (plans: PlanResponseData[]) => Promise<void> | void,
+      }
   }): Promise<void> {
     const {
       skipUninstall = false,
@@ -144,6 +148,32 @@ ${JSON.stringify(unsuccessfulImports, null, 2)}`);
 
     if (options?.validateImport) {
       await options.validateImport(importResults.map((r) => r.result[0]));
+    }
+
+    if (options?.testModify) {
+      const modifyPlans = [];
+      for (const config of options.testModify.configs) {
+        modifyPlans.push(await this.plan({
+          desired: config,
+          isStateful: false,
+          state: undefined,
+        }));
+      }
+
+      if (modifyPlans.some((p) => p.operation !== ResourceOperation.MODIFY)) {
+        throw new Error(`Error while testing modify. Non-modify results were found in the plan: 
+${JSON.stringify(modifyPlans, null, 2)}`)
+      }
+
+      for (const plan of modifyPlans) {
+        await this.apply({
+          planId: plan.planId
+        });
+      }
+
+      if (options.testModify.validate) {
+        await options.testModify.validate(modifyPlans);
+      }
     }
 
     if (!skipUninstall) {

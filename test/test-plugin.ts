@@ -1,4 +1,12 @@
-import { CreatePlan, DestroyPlan, Plugin, Resource, ResourceSettings, runPlugin } from 'codify-plugin-lib';
+import {
+  CreatePlan,
+  DestroyPlan, ModifyPlan,
+  ParameterChange,
+  Plugin,
+  Resource,
+  ResourceSettings,
+  runPlugin
+} from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
 export interface TestConfig extends StringIndexedObject {
@@ -91,11 +99,41 @@ export class TestUninstallResource extends Resource<TestConfig> {
   }
 }
 
+export class TestModifyResource extends Resource<TestConfig> {
+  getSettings(): ResourceSettings<TestConfig> {
+    return {
+      id: 'test-modify',
+      parameterSettings: {
+        propA: { type: 'string', canModify: true },
+        propB: { type: 'string', canModify: true },
+        propC: { type: 'string', canModify: true }
+      }
+    }
+  }
+
+  async refresh(parameters: Partial<TestConfig>): Promise<Array<Partial<TestConfig>> | Partial<TestConfig> | null> {
+    if (parameters.propA === 'Modify') {
+      parameters.propA = 'Modify__';
+    }
+
+    return parameters;
+  }
+
+  async modify(pc: ParameterChange<TestConfig>, plan: ModifyPlan<TestConfig>): Promise<void> {
+    return super.modify(pc, plan);
+  }
+
+  async create(plan: CreatePlan<TestConfig>): Promise<void> {}
+
+  async destroy(plan: DestroyPlan<TestConfig>): Promise<void> {}
+}
+
 runPlugin(Plugin.create(
   'default',
   [
     new TestResource(),
     new TestResource2(),
-    new TestUninstallResource()
+    new TestUninstallResource(),
+    new TestModifyResource()
   ]
 ));

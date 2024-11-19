@@ -222,4 +222,22 @@ describe('Plugin tester integration tests', () => {
   })
 
 
+  it('Can test modify', { timeout: 50000000 }, async () => {
+    const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
+
+    await plugin.fullTest([{
+      type: 'test-modify',
+      propA: 'a',
+      propB: 10,
+    }], {
+      skipUninstall: true,
+      testModify: {
+        configs: [{
+          type: 'test-modify',
+          propA: 'Modify',
+          propB: 10,
+        }]
+      }
+    })
+  })
 })
