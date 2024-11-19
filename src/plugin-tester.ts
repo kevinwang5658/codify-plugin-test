@@ -17,8 +17,8 @@ import {
   ValidateResponseData
 } from 'codify-schemas';
 import { ChildProcess, SpawnOptions, fork, spawn } from 'node:child_process';
-import inspector from 'node:inspector'
 import path from 'node:path';
+import unionBy from 'lodash.unionby';
 
 import { CodifyTestUtils } from './test-utils.js';
 
@@ -65,8 +65,8 @@ export class PluginTester {
       validateDestroy?: (plans: PlanResponseData[]) => Promise<void> | void,
       validateImport?: (importResults: (ImportResponseData['result'][0])[]) => Promise<void> | void,
       testModify?: {
-        configs: ResourceConfig[],
-        validate?: (plans: PlanResponseData[]) => Promise<void> | void,
+        modifiedConfigs: ResourceConfig[],
+        validateModify?: (plans: PlanResponseData[]) => Promise<void> | void,
       }
   }): Promise<void> {
     const {
@@ -152,7 +152,7 @@ ${JSON.stringify(unsuccessfulImports, null, 2)}`);
 
     if (options?.testModify) {
       const modifyPlans = [];
-      for (const config of options.testModify.configs) {
+      for (const config of options.testModify.modifiedConfigs) {
         modifyPlans.push(await this.plan({
           desired: config,
           isStateful: false,
@@ -171,13 +171,16 @@ ${JSON.stringify(modifyPlans, null, 2)}`)
         });
       }
 
-      if (options.testModify.validate) {
-        await options.testModify.validate(modifyPlans);
+      if (options.testModify.validateModify) {
+        await options.testModify.validateModify(modifyPlans);
       }
     }
 
     if (!skipUninstall) {
-      await this.uninstall(configs.toReversed(), options);
+      const id = (config: ResourceConfig) => config.type + config.name ? `.${config.name}` : '';
+
+      const configsToDestroy = unionBy(options?.testModify?.modifiedConfigs ?? [], configs, id);
+      await this.uninstall(configsToDestroy.toReversed(), options);
     }
   }
 

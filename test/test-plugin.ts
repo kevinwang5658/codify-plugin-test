@@ -112,6 +112,10 @@ export class TestModifyResource extends Resource<TestConfig> {
   }
 
   async refresh(parameters: Partial<TestConfig>): Promise<Array<Partial<TestConfig>> | Partial<TestConfig> | null> {
+    if (parameters === null) {
+      return null;
+    }
+
     if (parameters.propA === 'Modify') {
       parameters.propA = 'Modify__';
     }

@@ -232,7 +232,7 @@ describe('Plugin tester integration tests', () => {
     }], {
       skipUninstall: true,
       testModify: {
-        configs: [{
+        modifiedConfigs: [{
           type: 'test-modify',
           propA: 'Modify',
           propB: 10,
@@ -240,4 +240,41 @@ describe('Plugin tester integration tests', () => {
       }
     })
   })
+
+  it('Will call destory with the correct parameters (modify)', { timeout: 50000000 }, async () => {
+    const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
+
+    await expect(async () => await plugin.fullTest([{
+      type: 'test-modify',
+      propA: 'a',
+      propB: 10,
+    }], {
+      testModify: {
+        modifiedConfigs: [{
+          type: 'test-modify',
+          propA: 'Modify',
+          propB: 10,
+        }]
+      }
+    })).rejects.toThrow(
+`
+  "parameters": [
+    {
+      "name": "propA",
+      "previousValue": "Modify__",
+      "newValue": "Modify",
+      "operation": "modify"
+    },
+    {
+      "name": "propB",
+      "previousValue": "10",
+      "newValue": "10",
+      "operation": "noop"
+    }
+  ]
+}
+`
+    )
+  })
+
 })
