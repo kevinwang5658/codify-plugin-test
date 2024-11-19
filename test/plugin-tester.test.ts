@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { PluginTester } from '../src/index.js';
 import path from 'node:path';
 import { ResourceOperation } from 'codify-schemas/src/types/index.js';
+import deepMatches from 'lodash.matches';
+import differenceWith from 'lodash.differencewith';
+
 
 describe('Plugin tester integration tests', () => {
   it('Can instantiate a plugin', async () => {
@@ -122,7 +125,9 @@ describe('Plugin tester integration tests', () => {
       propA: 'a',
       propB: 10,
       propC: 'c',
-    }]);
+    }], {
+      skipUninstall: true,
+    });
   })
 
   it('Full test supports plan assertions to ensure the generated plan is correct', async () => {
@@ -139,19 +144,57 @@ describe('Plugin tester integration tests', () => {
       propA: 'a',
       propB: 10,
       propC: 'c',
-    }], false, (plans) => {
-      expect(plans[0]).toMatchObject({
-        planId: expect.any(String),
-        operation: ResourceOperation.NOOP,
-        resourceType: 'test',
-      });
+    }], {
+      skipUninstall: true,
+      validatePlan: (plans) => {
+        expect(plans[0]).toMatchObject({
+          planId: expect.any(String),
+          operation: ResourceOperation.NOOP,
+          resourceType: 'test',
+        });
 
-      expect(plans[1]).toMatchObject({
-        planId: expect.any(String),
-        operation: ResourceOperation.NOOP,
-        resourceType: 'test',
-      });
-    });
+        expect(plans[1]).toMatchObject({
+          planId: expect.any(String),
+          operation: ResourceOperation.NOOP,
+          resourceType: 'test',
+        });
+      }
+    })
+  })
+
+  it('Full test supports plan assertions to ensure the generated plan is correct (2)', async () => {
+    const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
+
+    // No expect needed here. This passes if it doesn't throw.
+    await plugin.fullTest([{
+      type: 'test',
+      propA: 'a',
+      propB: 10,
+    }], {
+      skipUninstall: true,
+      validatePlan: (plans) => {
+        expect(plans[0]).toMatchObject({
+          planId: expect.any(String),
+          operation: ResourceOperation.NOOP,
+          resourceType: 'test',
+        });
+      }
+    })
+  })
+
+  it('Full test supports plan assertions to ensure the generated plan is correct (3)', async () => {
+    const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
+
+    console.log(differenceWith(['b', 'a'], ['a', 'b', 'c'], (a, b) => deepMatches(a)(b)).length === 0);
+
+    // No expect needed here. This passes if it doesn't throw.
+    await plugin.fullTest([{
+      type: 'test2',
+      propB: ['second', 'first'],
+      propA: 'a',
+    }], {
+      skipUninstall: true,
+    })
   })
 
   it('Has helpers that can uninstall a resource', async () => {
@@ -177,4 +220,6 @@ describe('Plugin tester integration tests', () => {
       propC: 'c',
     }])).rejects.toThrowError();
   })
+
+
 })

@@ -42,9 +42,6 @@ export class PluginTester {
       throw new Error('A fully qualified path must be supplied to PluginTester');
     }
 
-    console.log('Node Inspector:')
-    console.log(inspector.url());
-
     this.childProcess = fork(
       pluginPath,
       [],
@@ -134,9 +131,8 @@ ${JSON.stringify(unsuccessfulPlans, null, 2)}`
       const importResult = await this.import({ config })
       importResults.push(importResult);
 
-      if (importResult.result.length !== 1 ||
-        Object.entries(config).some(([k, v]) => importResult.result[0][k] !== v)
-      ) {
+      const validationPlan = await this.plan({ desired: importResult.result[0], isStateful: false, state: undefined });
+      if (validationPlan.operation !== ResourceOperation.NOOP) {
         unsuccessfulImports.push(importResult);
       }
     }

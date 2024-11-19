@@ -1,4 +1,4 @@
-import { Plugin, Resource, runPlugin } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, Plugin, Resource, ResourceSettings, runPlugin } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
 export interface TestConfig extends StringIndexedObject {
@@ -7,16 +7,18 @@ export interface TestConfig extends StringIndexedObject {
   propC: string;
 }
 
+export interface TestConfig2 extends StringIndexedObject {
+  propA: string;
+  propB: string[];
+}
+
+
 export class TestResource extends Resource<TestConfig> {
-  constructor() {
-    super({
-      type: 'test'
-    });
+  getSettings(): ResourceSettings<TestConfig> {
+    return {
+      id: 'test'
+    };
   }
-
-  async applyCreate(): Promise<void> {}
-
-  async applyDestroy(): Promise<void> {}
 
   async refresh(parameters: Partial<TestConfig>): Promise<Partial<TestConfig> | null> {
     if (parameters.propD) {
@@ -29,34 +31,71 @@ export class TestResource extends Resource<TestConfig> {
       propC: 'c',
     };
   }
+
+  async create(plan: CreatePlan<TestConfig>): Promise<void> {
+  }
+
+  async destroy(plan: DestroyPlan<TestConfig>): Promise<void> {
+  }
+}
+
+export class TestResource2 extends Resource<TestConfig2> {
+  getSettings(): ResourceSettings<TestConfig2> {
+    return {
+      id: 'test2',
+      parameterSettings: {
+        propB: { type: 'array' }
+      }
+    };
+  }
+
+  async refresh(parameters: Partial<TestConfig2>): Promise<Partial<TestConfig2> | null> {
+    if (parameters.propD) {
+      throw new Error('Prop D is included');
+    }
+
+    return {
+      propA: 'a',
+      propB: ['first', 'second', 'third']
+    };
+  }
+
+  async create(plan: CreatePlan<TestConfig2>): Promise<void> {
+  }
+
+  async destroy(plan: DestroyPlan<TestConfig2>): Promise<void> {
+  }
 }
 
 export class TestUninstallResource extends Resource<TestConfig> {
-  constructor() {
-    super({
-      type: 'test-uninstall'
-    });
+  first = true;
+  getSettings(): ResourceSettings<TestConfig> {
+    return {
+      id: 'test-uninstall'
+    }
   }
 
-  async applyCreate(): Promise<void> {}
+  async create(plan: CreatePlan<TestConfig>): Promise<void> {
+  }
 
-  async applyDestroy(): Promise<void> {}
+  async destroy(plan: DestroyPlan<TestConfig>): Promise<void> {
+  }
 
-  async refresh(): Promise<Partial<TestConfig> | null> {
+  async refresh(parameters: Partial<TestConfig>): Promise<Array<Partial<TestConfig>> | Partial<TestConfig> | null> {
+    if (this.first) {
+      this.first = false;
+      return parameters;
+    }
+
     return null;
   }
 }
 
-function buildPlugin(): Plugin {
-  const resourceMap = new Map();
-
-  const testResource = new TestResource();
-  resourceMap.set(testResource.typeId, testResource);
-
-  const testUninstallResource = new TestUninstallResource();
-  resourceMap.set(testUninstallResource.typeId, testUninstallResource);
-
-  return new Plugin('test', resourceMap);
-}
-
-runPlugin(buildPlugin());
+runPlugin(Plugin.create(
+  'default',
+  [
+    new TestResource(),
+    new TestResource2(),
+    new TestUninstallResource()
+  ]
+));
