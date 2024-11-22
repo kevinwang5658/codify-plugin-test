@@ -277,4 +277,56 @@ describe('Plugin tester integration tests', () => {
     )
   })
 
+  it('Works when uninstalling two resources', async () => {
+    const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
+
+    await plugin.fullTest([{
+      type: 'test-destroy',
+      propA: 'a',
+      propB: 10,
+    }, {
+      type: 'test-destroy-2',
+      propA: 'a',
+      propB: 20,
+    }], {
+      validateDestroy(plan) {
+        expect(plan.length).to.eq(2);
+        expect(plan[0]).toMatchObject({
+          operation: 'destroy',
+          resourceType: 'test-destroy-2',
+        })
+        expect(plan[1]).toMatchObject({
+          operation: 'destroy',
+          resourceType: 'test-destroy',
+        })
+      }
+    });
+  })
+
+  it('Can uninstall two resources with the same type', async () => {
+    const plugin = new PluginTester(path.join(__dirname, './test-plugin.ts'));
+
+    await plugin.fullTest([{
+      type: 'test-destroy',
+      propA: 'a',
+      propB: 10,
+    }, {
+      type: 'test-destroy',
+      propA: 'a',
+      propB: 20,
+    }], {
+      validateDestroy(plan) {
+        expect(plan.length).to.eq(2);
+        expect(plan[0]).toMatchObject({
+          operation: 'destroy',
+          resourceType: 'test-destroy',
+        })
+        expect(plan[1]).toMatchObject({
+          operation: 'destroy',
+          resourceType: 'test-destroy',
+        })
+      }
+    });
+  })
+
 })

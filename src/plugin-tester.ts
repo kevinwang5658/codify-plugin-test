@@ -177,9 +177,13 @@ ${JSON.stringify(modifyPlans, null, 2)}`)
     }
 
     if (!skipUninstall) {
-      const id = (config: ResourceConfig) => config.type + config.name ? `.${config.name}` : '';
+      // We need to add unique names to multiple configs with the same type or else it breaks the unionBy below.
+      const configsWithNames = this.addNamesToConfigs(configs);
+      const modifiedConfigs = this.addNamesToConfigs(options?.testModify?.modifiedConfigs ?? [])
 
-      const configsToDestroy = unionBy(options?.testModify?.modifiedConfigs ?? [], configs, id);
+      const id = (config: ResourceConfig) => config.type + (config.name ? `.${config.name}` : '')
+
+      const configsToDestroy = unionBy(modifiedConfigs, configsWithNames, id);
       await this.uninstall(configsToDestroy.toReversed(), options);
     }
   }
@@ -290,6 +294,22 @@ ${JSON.stringify(validationPlan, null, 2)}
         })
       }
     })
+  }
+
+  private addNamesToConfigs(configs: ResourceConfig[]): ResourceConfig[] {
+    const configsWithNames = new Array<ResourceConfig>();
+
+    const typeSet = new Set(configs.map((c) => c.type));
+    for (const type of typeSet) {
+      const sameTypeConfigs = configs.filter((c) => c.type === type);
+      if (sameTypeConfigs.length > 1) {
+        sameTypeConfigs.forEach((c, idx) => { c.name = c.name ?? idx.toString() });
+      }
+
+      configsWithNames.push(...sameTypeConfigs);
+    }
+
+    return configsWithNames;
   }
 }
 

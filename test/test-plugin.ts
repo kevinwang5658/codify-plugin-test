@@ -132,12 +132,54 @@ export class TestModifyResource extends Resource<TestConfig> {
   async destroy(plan: DestroyPlan<TestConfig>): Promise<void> {}
 }
 
+export class TestDestroyResource extends Resource<TestConfig> {
+  private isCreated: boolean;
+  private isDestroyed: boolean;
+
+  getSettings(): ResourceSettings<TestConfig> {
+    return {
+      id: 'test-destroy',
+    }
+  }
+
+  async refresh(parameters: Partial<TestConfig>): Promise<Array<Partial<TestConfig>> | Partial<TestConfig> | null> {
+    if (this.isCreated && !this.isDestroyed) {
+      return parameters;
+    }
+
+    return null;
+  }
+
+  async modify(pc: ParameterChange<TestConfig>, plan: ModifyPlan<TestConfig>): Promise<void> {
+    return super.modify(pc, plan);
+  }
+
+  async create(plan: CreatePlan<TestConfig>): Promise<void> {
+    this.isCreated = true;
+  }
+
+  async destroy(plan: DestroyPlan<TestConfig>): Promise<void> {
+    this.isDestroyed = true;
+    console.log('destroy');
+  }
+}
+
+export class TestDestroyResource2 extends TestDestroyResource {
+  getSettings(): ResourceSettings<TestConfig> {
+    return {
+      id: 'test-destroy-2',
+    }
+  }
+}
+
 runPlugin(Plugin.create(
   'default',
   [
     new TestResource(),
     new TestResource2(),
     new TestUninstallResource(),
-    new TestModifyResource()
+    new TestModifyResource(),
+    new TestDestroyResource(),
+    new TestDestroyResource2()
   ]
 ));
