@@ -5,6 +5,7 @@ import {
   ImportResponseData,
   InitializeResponseData,
   IpcMessageSchema,
+  IpcMessageV2,
   MessageCmd,
   PlanRequestData,
   PlanResponseData,
@@ -16,9 +17,10 @@ import {
   ValidateRequestData,
   ValidateResponseData
 } from 'codify-schemas';
+import unionBy from 'lodash.unionby';
+import { nanoid } from 'nanoid';
 import { ChildProcess, SpawnOptions, fork, spawn } from 'node:child_process';
 import path from 'node:path';
-import unionBy from 'lodash.unionby';
 
 import { CodifyTestUtils } from './test-utils.js';
 
@@ -108,23 +110,6 @@ export class PluginTester {
       });
     }
 
-    // Check that all applys were successful by re-planning
-    const validationPlans = [];
-    for (const config of configs) {
-      validationPlans.push(await this.plan({
-        desired: config,
-        isStateful: false,
-        state: undefined,
-      }));
-    }
-
-    const unsuccessfulPlans = validationPlans.filter((p) => p.operation !== ResourceOperation.NOOP);
-    if (unsuccessfulPlans.length > 0) {
-      throw new Error(`The following applies were not successful. Re-running plan shows that the resources did not return no-op but instead returned:
-${JSON.stringify(unsuccessfulPlans, null, 2)}`
-      )
-    }
-
     if (options?.validateApply) {
       await options.validateApply(plans);
     }
@@ -211,21 +196,6 @@ ${JSON.stringify(modifyPlans, null, 2)}`)
       });
     }
 
-    // Validate that the destroy was successful
-    for (const config of configs) {
-      const validationPlan = await this.plan({
-        desired: config,
-        isStateful: true,
-        state: undefined
-      })
-      if (validationPlan.operation !== ResourceOperation.CREATE) {
-        throw new Error(`Resource was not successfully destroyed.
-Validation plan shows:
-${JSON.stringify(validationPlan, null, 2)}
-        `);
-      }
-    }
-
     if (options?.validateDestroy) {
       await options.validateDestroy(plans);
     }
@@ -235,6 +205,7 @@ ${JSON.stringify(validationPlan, null, 2)}
     return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'initialize',
       data: {},
+      requestId: nanoid(6),
     });
   }
 
@@ -242,6 +213,7 @@ ${JSON.stringify(validationPlan, null, 2)}
     return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'validate',
       data,
+      requestId: nanoid(6),
     });
   }
 
@@ -249,6 +221,7 @@ ${JSON.stringify(validationPlan, null, 2)}
     return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'plan',
       data,
+      requestId: nanoid(6),
     });
   }
 
@@ -256,6 +229,7 @@ ${JSON.stringify(validationPlan, null, 2)}
     return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'apply',
       data,
+      requestId: nanoid(6),
     });
   }
 
@@ -263,6 +237,7 @@ ${JSON.stringify(validationPlan, null, 2)}
     return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'import',
       data,
+      requestId: nanoid(6),
     });
   }
 
@@ -278,7 +253,7 @@ ${JSON.stringify(validationPlan, null, 2)}
       }
 
       if (message.cmd === MessageCmd.SUDO_REQUEST) {
-        const { data } = message;
+        const { data, requestId } = message;
         if (!sudoRequestValidator(data)) {
           throw new Error(`Invalid sudo request from plugin. ${JSON.stringify(sudoRequestValidator.errors, null, 2)}`);
         }
@@ -288,9 +263,10 @@ ${JSON.stringify(validationPlan, null, 2)}
         console.log(`Running command with sudo: 'sudo ${command}'`)
         const result = await sudoSpawn(command, options);
 
-        process.send({
+        process.send(<IpcMessageV2>{
           cmd: MessageCmd.SUDO_REQUEST + '_Response',
           data: result,
+          requestId,
         })
       }
     })

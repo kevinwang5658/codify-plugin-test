@@ -1,6 +1,6 @@
 {
   "name": "codify-plugin-test",
-  "version": "0.0.26",
+  "version": "0.0.31",
   "description": "",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -15,10 +15,11 @@
   "dependencies": {
     "ajv": "^8.12.0",
     "ajv-formats": "^3.0.1",
-    "codify-schemas": "1.0.52",
+    "codify-schemas": "1.0.54",
     "lodash.matches": "^4.6.0",
     "lodash.differencewith": "4.5.0",
-    "lodash.unionby": "^4.8.0"
+    "lodash.unionby": "^4.8.0",
+    "nanoid": "^5.0.9"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
@@ -34,7 +35,7 @@
     "tsx": "^4.7.3",
     "typescript": "^5",
     "vitest": "^1.4.0",
-    "codify-plugin-lib": "1.0.106"
+    "codify-plugin-lib": "1.0.117"
   },
   "engines": {
     "node": ">=18.0.0"
