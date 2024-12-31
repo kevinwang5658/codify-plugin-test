@@ -1,6 +1,6 @@
 {
   "name": "codify-plugin-test",
-  "version": "0.0.31",
+  "version": "0.0.32",
   "description": "",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",

@@ -115,20 +115,9 @@ export class PluginTester {
     }
 
     const importResults = [];
-    const unsuccessfulImports = [];
     for (const config of configs) {
       const importResult = await this.import({ config })
       importResults.push(importResult);
-
-      const validationPlan = await this.plan({ desired: importResult.result[0], isStateful: false, state: undefined });
-      if (validationPlan.operation !== ResourceOperation.NOOP) {
-        unsuccessfulImports.push(importResult);
-      }
-    }
-
-    if (unsuccessfulImports.length > 0) {
-      throw new Error(`The following imports were not successful. The imports differed from the original.
-${JSON.stringify(unsuccessfulImports, null, 2)}`);
     }
 
     if (options?.validateImport) {
