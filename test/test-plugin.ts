@@ -8,6 +8,8 @@ import {
   runPlugin
 } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
+import { b } from 'vitest/dist/reporters-yx5ZTtEV';
+import * as fs from 'node:fs';
 
 export interface TestConfig extends StringIndexedObject {
   propA: string;
@@ -133,8 +135,7 @@ export class TestModifyResource extends Resource<TestConfig> {
 }
 
 export class TestDestroyResource extends Resource<TestConfig> {
-  private isCreated: boolean;
-  private isDestroyed: boolean;
+  private name: string;
 
   getSettings(): ResourceSettings<TestConfig> {
     return {
@@ -143,11 +144,7 @@ export class TestDestroyResource extends Resource<TestConfig> {
   }
 
   async refresh(parameters: Partial<TestConfig>): Promise<Array<Partial<TestConfig>> | Partial<TestConfig> | null> {
-    if (this.isCreated && !this.isDestroyed) {
-      return parameters;
-    }
-
-    return null;
+    return fs.existsSync(`/tmp/${this.getSettings().id}`) ? parameters : null;
   }
 
   async modify(pc: ParameterChange<TestConfig>, plan: ModifyPlan<TestConfig>): Promise<void> {
@@ -155,12 +152,15 @@ export class TestDestroyResource extends Resource<TestConfig> {
   }
 
   async create(plan: CreatePlan<TestConfig>): Promise<void> {
-    this.isCreated = true;
+    if (!this.name && plan.coreParameters.name) {
+      this.name = plan.coreParameters.name;
+    }
+
+    fs.writeFileSync(`/tmp/${this.getSettings().id}`, ' ');
   }
 
   async destroy(plan: DestroyPlan<TestConfig>): Promise<void> {
-    this.isDestroyed = true;
-    console.log('destroy');
+    fs.rmSync(`/tmp/${this.getSettings().id}`);
   }
 }
 
