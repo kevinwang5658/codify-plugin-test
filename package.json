@@ -1,6 +1,6 @@
 {
   "name": "codify-plugin-test",
-  "version": "0.0.32",
+  "version": "0.0.33",
   "description": "",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -19,7 +19,8 @@
     "lodash.matches": "^4.6.0",
     "lodash.differencewith": "4.5.0",
     "lodash.unionby": "^4.8.0",
-    "nanoid": "^5.0.9"
+    "nanoid": "^5.0.9",
+    "chalk": "^5.4.1"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",

@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import chalk from 'chalk';
 import {
   ApplyRequestData,
   ImportRequestData,
@@ -75,6 +76,9 @@ export class PluginTester {
       skipUninstall = false,
     } = options ?? {}
 
+    const ids = configs.map((c) => c.name ? `${c.type}.${c.name}` : c.type).join(',')
+
+    console.info(chalk.cyan(`Testing initialization for ${ids}...`))
     const initializeResult = await this.initialize();
 
     const unsupportedConfigs = configs.filter((c)  =>
@@ -84,6 +88,7 @@ export class PluginTester {
       throw new Error(`The plugin does not support the following configs supplied:\n ${JSON.stringify(unsupportedConfigs, null, 2)}\n Initialize result: ${JSON.stringify(initializeResult)}`)
     }
 
+    console.info(chalk.cyan(`Testing validate for ${ids}...`))
     const validate = await this.validate({ configs });
 
     const invalidConfigs = validate.resourceValidations.filter((v) => !v.isValid)
@@ -91,6 +96,7 @@ export class PluginTester {
       throw new Error(`The following configs did not validate:\n ${JSON.stringify(invalidConfigs, null, 2)}`)
     }
 
+    console.info(chalk.cyan(`Testing plan for ${ids}...`))
     const plans = [];
     for (const config of configs) {
       plans.push(await this.plan({
@@ -104,6 +110,7 @@ export class PluginTester {
       await options.validatePlan(plans);
     }
 
+    console.info(chalk.cyan(`Testing apply for ${ids}...`))
     for (const plan of plans) {
       await this.apply({
         planId: plan.planId
@@ -114,6 +121,7 @@ export class PluginTester {
       await options.validateApply(plans);
     }
 
+    console.info(chalk.cyan(`Testing import for ${ids}...`))
     const importResults = [];
     for (const config of configs) {
       const importResult = await this.import({ config })
@@ -125,6 +133,8 @@ export class PluginTester {
     }
 
     if (options?.testModify) {
+      console.info(chalk.cyan(`Testing modify for ${ids}...`))
+
       const modifyPlans = [];
       for (const config of options.testModify.modifiedConfigs) {
         modifyPlans.push(await this.plan({
@@ -165,8 +175,10 @@ ${JSON.stringify(modifyPlans, null, 2)}`)
   async uninstall(configs: ResourceConfig[], options?: {
     validateDestroy?: (plans: PlanResponseData[]) => Promise<void> | void
   }) {
-    const plans = [];
+    const ids = configs.map((c) => c.name ? `${c.type}.${c.name}` : c.type).join(',')
+    console.info(chalk.cyan(`Testing destroy for ${ids}...`))
 
+    const plans = [];
     for (const config of configs) {
       plans.push(await this.plan({
         desired: undefined,
@@ -177,7 +189,7 @@ ${JSON.stringify(modifyPlans, null, 2)}`)
 
     for (const plan of plans) {
       if (plan.operation !== ResourceOperation.DESTROY) {
-        throw new Error(`Expect resource operation to be 'destory' but instead received plan: \n ${JSON.stringify(plan, null, 2)}`)
+        throw new Error(`Expect resource operation to be 'destroy' but instead received plan: \n ${JSON.stringify(plan, null, 2)}`)
       }
 
       await this.apply({
