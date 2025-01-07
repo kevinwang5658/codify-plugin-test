@@ -35,6 +35,8 @@ export class PluginProcess {
       throw new Error('A fully qualified path must be supplied to PluginTester');
     }
 
+    const debug = (process.env.DEBUG) ? ['--inspect-brk=9221'] : [];
+
     this.childProcess = fork(
       pluginPath,
       [],
@@ -42,9 +44,13 @@ export class PluginProcess {
         // Use default true to test plugins in secure mode (un-able to request sudo directly)
         // detached: true,
         env: { ...process.env },
-        execArgv: ['--import', 'tsx/esm'],
+        execArgv: ['--import', 'tsx/esm', ...debug],
+        stdio: 'pipe',
       },
     )
+
+    this.childProcess.stderr?.pipe(process.stderr);
+    this.childProcess.stdout?.pipe(process.stdout);
 
     this.handleSudoRequests(this.childProcess);
   }
@@ -107,8 +113,6 @@ export class PluginProcess {
         }
 
         const { command, options } = data as unknown as SudoRequestData;
-
-        console.log(`Running command with sudo: 'sudo ${command}'`)
         const result = await sudoSpawn(command, options);
 
         process.send(<IpcMessageV2>{
