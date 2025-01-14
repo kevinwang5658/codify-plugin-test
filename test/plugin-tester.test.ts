@@ -41,10 +41,14 @@ describe('Plugin tester integration tests', () => {
   it('Can validate a config', async () => {
     const result = await plugin.validate({
       configs: [{
-        type: 'test',
-        propA: 'a',
-        propB: 2,
-        propC: 'c',
+        core: {
+          type: 'test',
+        },
+        parameters: {
+          propA: 'a',
+          propB: 2,
+          propC: 'c',
+        }
       }]
     })
 
@@ -55,8 +59,10 @@ describe('Plugin tester integration tests', () => {
 
   it('Can generate a plan', async () => {
     const result = await plugin.plan({
-      desired: {
+      core: {
         type: 'test',
+      },
+      desired: {
         propA: 'a',
         propB: 10,
         propC: 'c',
@@ -74,8 +80,10 @@ describe('Plugin tester integration tests', () => {
 
   it('Can generate a plan', async () => {
     const result = await plugin.plan({
-      desired: {
+      core: {
         type: 'test',
+      },
+      desired: {
         propA: 'a',
         propB: 10,
         propC: 'c',
@@ -93,8 +101,10 @@ describe('Plugin tester integration tests', () => {
 
   it('Can apply a plan', async () => {
     const plan = await plugin.plan({
-      desired: {
+      core: {
         type: 'test',
+      },
+      desired: {
         propA: 'a',
         propB: 10,
         propC: 'c',
@@ -109,8 +119,10 @@ describe('Plugin tester integration tests', () => {
 
   it('Handles errors that are thrown', async () => {
     expect(async () => plugin.plan({
-      desired: {
+      core: {
         type: 'test',
+      },
+      desired: {
         propA: 'a',
         propB: 10,
         propC: 'c',

@@ -8,6 +8,7 @@ import {
 import unionBy from 'lodash.unionby';
 
 import { PluginProcess } from './plugin-process.js';
+import { splitUserConfig } from './utils.js';
 
 export class PluginTester {
   static async fullTest(
@@ -45,7 +46,10 @@ export class PluginTester {
       }
 
       console.info(chalk.cyan('Testing validate...'))
-      const validate = await plugin.validate({ configs });
+      const validate = await plugin.validate({ configs: configs.map((c) => {
+        const { coreParameters, parameters } = splitUserConfig(c)
+        return { core: coreParameters, parameters };
+      }) });
 
       const invalidConfigs = validate.resourceValidations.filter((v) => !v.isValid)
       if (invalidConfigs.length > 0) {
@@ -55,8 +59,11 @@ export class PluginTester {
       console.info(chalk.cyan('Testing plan...'))
       const plans = [];
       for (const config of configs) {
+        const { coreParameters, parameters } = splitUserConfig(config);
+        
         plans.push(await plugin.plan({
-          desired: config,
+          core: coreParameters,
+          desired: parameters,
           isStateful: false,
           state: undefined,
         }));
@@ -86,7 +93,9 @@ export class PluginTester {
 
       const importResults = [];
       for (const config of configs) {
-        const importResult = await importPlugin.import({ config })
+        const { coreParameters, parameters } = splitUserConfig(config);
+        
+        const importResult = await importPlugin.import({ core: coreParameters, parameters })
         importResults.push(importResult);
       }
 
@@ -105,8 +114,11 @@ export class PluginTester {
 
         const modifyPlans = [];
         for (const config of options.testModify.modifiedConfigs) {
+          const { coreParameters, parameters } = splitUserConfig(config);
+          
           modifyPlans.push(await modifyPlugin.plan({
-            desired: config,
+            core: coreParameters,
+            desired: parameters,
             isStateful: false,
             state: undefined,
           }));
@@ -153,9 +165,12 @@ ${JSON.stringify(modifyPlans, null, 2)}`)
 
       const plans = [];
       for (const config of configs) {
+        const { coreParameters, parameters } = splitUserConfig(config);
+        
         plans.push(await destroyPlugin.plan({
+          core: coreParameters,
           isStateful: true,
-          state: config,
+          state: parameters,
           desired: undefined
         }))
       }
