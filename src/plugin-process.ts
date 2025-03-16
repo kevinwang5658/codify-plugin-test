@@ -58,7 +58,7 @@ export class PluginProcess {
   async initialize(): Promise<InitializeResponseData> {
     return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'initialize',
-      data: {},
+      data: { verbosityLevel: 3 },
       requestId: nanoid(6),
     });
   }

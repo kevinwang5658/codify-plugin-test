@@ -16,6 +16,7 @@ export class PluginTester {
     configs: ResourceConfig[],
     options?: {
       skipUninstall?: boolean,
+      skipImport?: boolean,
       validatePlan?: (plans: PlanResponseData[]) => Promise<void> | void
       validateApply?: (plans: PlanResponseData[]) => Promise<void> | void,
       validateDestroy?: (plans: PlanResponseData[]) => Promise<void> | void,
@@ -87,23 +88,25 @@ export class PluginTester {
       plugin.kill();
     }
 
-    const importPlugin = new PluginProcess(pluginPath);
-    try {
-      console.info(chalk.cyan('Testing import...'))
+    if (!options?.skipImport) {
+      const importPlugin = new PluginProcess(pluginPath);
+      try {
+        console.info(chalk.cyan('Testing import...'))
 
-      const importResults = [];
-      for (const config of configs) {
-        const { coreParameters, parameters } = splitUserConfig(config);
-        
-        const importResult = await importPlugin.import({ core: coreParameters, parameters })
-        importResults.push(importResult);
-      }
+        const importResults = [];
+        for (const config of configs) {
+          const { coreParameters, parameters } = splitUserConfig(config);
 
-      if (options?.validateImport) {
-        await options.validateImport(importResults.map((r) => r.result[0]));
+          const importResult = await importPlugin.import({ core: coreParameters, parameters })
+          importResults.push(importResult);
+        }
+
+        if (options?.validateImport) {
+          await options.validateImport(importResults.map((r) => r.result[0]));
+        }
+      } finally {
+        importPlugin.kill();
       }
-    } finally {
-      importPlugin.kill();
     }
 
     if (options?.testModify) {

@@ -26,7 +26,8 @@ export interface TestConfig2 extends StringIndexedObject {
 export class TestResource extends Resource<TestConfig> {
   getSettings(): ResourceSettings<TestConfig> {
     return {
-      id: 'test'
+      id: 'test',
+      allowMultiple: true,
     };
   }
 
