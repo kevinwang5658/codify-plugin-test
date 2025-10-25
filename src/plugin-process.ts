@@ -14,6 +14,8 @@ import { ChildProcess, SpawnOptions, fork, spawn } from 'node:child_process';
 import path from 'node:path';
 
 import { CodifyTestUtils } from './test-utils.js';
+import fs from 'node:fs/promises';
+import * as os from 'node:os';
 
 const ajv = new Ajv.default({
   strict: true
@@ -52,7 +54,7 @@ export class PluginProcess {
     this.childProcess.stderr?.pipe(process.stderr);
     this.childProcess.stdout?.pipe(process.stdout);
 
-    this.handleSudoRequests(this.childProcess);
+    this.handleIncomingRequests(this.childProcess);
   }
 
   async initialize(): Promise<InitializeResponseData> {
@@ -99,7 +101,7 @@ export class PluginProcess {
     this.childProcess.kill();
   }
 
-  private handleSudoRequests(process: ChildProcess) {
+  private handleIncomingRequests(process: ChildProcess) {
     // Listen for incoming sudo incoming sudo requests
     process.on('message', async (message) => {
       if (!ipcMessageValidator(message)) {
@@ -118,6 +120,39 @@ export class PluginProcess {
         process.send(<IpcMessageV2>{
           cmd: MessageCmd.SUDO_REQUEST + '_Response',
           data: result,
+          requestId,
+        })
+      }
+
+      if (message.cmd === MessageCmd.PRESS_KEY_TO_CONTINUE_REQUEST) {
+        const { data, requestId } = message;
+        if (!sudoRequestValidator(data)) {
+          throw new Error(`Invalid sudo request from plugin. ${JSON.stringify(sudoRequestValidator.errors, null, 2)}`);
+        }
+
+        process.send(<IpcMessageV2>{
+          cmd: MessageCmd.PRESS_KEY_TO_CONTINUE_REQUEST + '_Response',
+          data: {},
+          requestId,
+        })
+      }
+
+      if (message.cmd === MessageCmd.CODIFY_CREDENTIALS_REQUEST) {
+        const { requestId } = message;
+
+        const loginJson = await fs.readFile(path.join(os.homedir(), '.codify', 'credentials.json'), 'utf8');
+        if (!loginJson) {
+          throw new Error('Unable to get login credentials')
+        }
+
+        const login = JSON.parse(loginJson);
+        if (!login) {
+          throw new Error('Unable to parse login credentials')
+        }
+
+        process.send(<IpcMessageV2>{
+          cmd: MessageCmd.CODIFY_CREDENTIALS_REQUEST + '_Response',
+          data: login.accessToken,
           requestId,
         })
       }

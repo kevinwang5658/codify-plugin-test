@@ -179,7 +179,7 @@ ${JSON.stringify(modifyPlans, null, 2)}`)
       }
 
       for (const plan of plans) {
-        if (plan.operation !== ResourceOperation.DESTROY) {
+        if (plan.operation !== ResourceOperation.DESTROY && plan.operation !== ResourceOperation.NOOP) {
           throw new Error(`Expect resource operation to be 'destroy' but instead received plan: \n ${JSON.stringify(plans, null, 2)}`)
         }
 
