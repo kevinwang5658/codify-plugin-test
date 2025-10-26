@@ -1,6 +1,6 @@
 {
   "name": "codify-plugin-test",
-  "version": "0.0.52",
+  "version": "0.0.53",
   "description": "",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -35,7 +35,7 @@
     "eslint-config-oclif-typescript": "^3",
     "eslint-config-prettier": "^9.0.0",
     "tsx": "^4.7.3",
-    "typescript": "^5",
+    "typescript": "5.3.3",
     "vitest": "^1.4.0",
     "codify-plugin-lib": "1.0.171"
   },

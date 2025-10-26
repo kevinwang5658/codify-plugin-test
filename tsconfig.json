@@ -7,13 +7,12 @@
     "resolveJsonModule": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
-    "removeComments": true,
     "strictNullChecks": true,
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "rootDir": "src",
-    "outDir": "./dist"
+    "outDir": "./dist",
   },
   "exclude": [
     "node_modules",

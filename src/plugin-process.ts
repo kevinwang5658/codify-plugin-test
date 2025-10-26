@@ -101,9 +101,9 @@ export class PluginProcess {
     this.childProcess.kill();
   }
 
-  private handleIncomingRequests(process: ChildProcess) {
+  private handleIncomingRequests(cp: ChildProcess) {
     // Listen for incoming sudo incoming sudo requests
-    process.on('message', async (message) => {
+    cp.on('message', async (message) => {
       if (!ipcMessageValidator(message)) {
         throw new Error(`Invalid message from plugin. ${JSON.stringify(message, null, 2)}`);
       }
@@ -117,7 +117,7 @@ export class PluginProcess {
         const { command, options } = data as unknown as SudoRequestData;
         const result = await sudoSpawn(command, options);
 
-        process.send(<IpcMessageV2>{
+        cp.send(<IpcMessageV2>{
           cmd: MessageCmd.SUDO_REQUEST + '_Response',
           data: result,
           requestId,
@@ -130,7 +130,7 @@ export class PluginProcess {
           throw new Error(`Invalid sudo request from plugin. ${JSON.stringify(sudoRequestValidator.errors, null, 2)}`);
         }
 
-        process.send(<IpcMessageV2>{
+        cp.send(<IpcMessageV2>{
           cmd: MessageCmd.PRESS_KEY_TO_CONTINUE_REQUEST + '_Response',
           data: {},
           requestId,
@@ -140,19 +140,14 @@ export class PluginProcess {
       if (message.cmd === MessageCmd.CODIFY_CREDENTIALS_REQUEST) {
         const { requestId } = message;
 
-        const loginJson = await fs.readFile(path.join(os.homedir(), '.codify', 'credentials.json'), 'utf8');
-        if (!loginJson) {
-          throw new Error('Unable to get login credentials')
+        const testJwt = process.env.VITE_CODIFY_TEST_JWT;
+        if (!testJwt) {
+          throw new Error('Unable to parse login credentials from VITE_CODIFY_TEST_JWT env var. Please set and try again');
         }
 
-        const login = JSON.parse(loginJson);
-        if (!login) {
-          throw new Error('Unable to parse login credentials')
-        }
-
-        process.send(<IpcMessageV2>{
+        cp.send(<IpcMessageV2>{
           cmd: MessageCmd.CODIFY_CREDENTIALS_REQUEST + '_Response',
-          data: login.accessToken,
+          data: testJwt,
           requestId,
         })
       }
