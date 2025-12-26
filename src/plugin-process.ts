@@ -1,28 +1,34 @@
 import Ajv from 'ajv';
 import {
-  ApplyRequestData, ImportRequestData, ImportResponseData,
+  ApplyRequestData,
+  CommandRequestData,
+  CommandRequestDataSchema,
+  ImportRequestData,
+  ImportResponseData,
   InitializeResponseData,
   IpcMessageSchema,
   IpcMessageV2,
-  MessageCmd, PlanRequestData, PlanResponseData,
-  SpawnStatus,
-  SudoRequestData,
-  SudoRequestDataSchema, ValidateRequestData, ValidateResponseData
+  MessageCmd,
+  PlanRequestData,
+  PlanResponseData,
+  ValidateRequestData,
+  ValidateResponseData
 } from 'codify-schemas';
 import { nanoid } from 'nanoid';
-import { ChildProcess, SpawnOptions, fork, spawn } from 'node:child_process';
-import path from 'node:path';
-
-import { CodifyTestUtils } from './test-utils.js';
+import { ChildProcess, fork } from 'node:child_process';
 import fs from 'node:fs/promises';
 import * as os from 'node:os';
+import path from 'node:path';
+
+import { spawnSafe } from './spawn.js';
+import { CodifyTestUtils } from './test-utils.js';
 
 const ajv = new Ajv.default({
   strict: true
 });
 
 const ipcMessageValidator = ajv.compile(IpcMessageSchema);
-const sudoRequestValidator = ajv.compile(SudoRequestDataSchema);
+const commandRequestValidator = ajv.compile(CommandRequestDataSchema);
 
 export class PluginProcess {
   childProcess: ChildProcess
@@ -108,17 +114,17 @@ export class PluginProcess {
         throw new Error(`Invalid message from plugin. ${JSON.stringify(message, null, 2)}`);
       }
 
-      if (message.cmd === MessageCmd.SUDO_REQUEST) {
+      if (message.cmd === MessageCmd.COMMAND_REQUEST) {
         const { data, requestId } = message;
-        if (!sudoRequestValidator(data)) {
-          throw new Error(`Invalid sudo request from plugin. ${JSON.stringify(sudoRequestValidator.errors, null, 2)}`);
+        if (!commandRequestValidator(data)) {
+          throw new Error(`Invalid sudo request from plugin. ${JSON.stringify(commandRequestValidator.errors, null, 2)}`);
         }
 
-        const { command, options } = data as unknown as SudoRequestData;
-        const result = await sudoSpawn(command, options);
+        const { command, options } = data as unknown as CommandRequestData;
+        const result = await spawnSafe(command, options);
 
         cp.send(<IpcMessageV2>{
-          cmd: MessageCmd.SUDO_REQUEST + '_Response',
+          cmd: MessageCmd.COMMAND_REQUEST + '_Response',
           data: result,
           requestId,
         })
@@ -126,8 +132,8 @@ export class PluginProcess {
 
       if (message.cmd === MessageCmd.PRESS_KEY_TO_CONTINUE_REQUEST) {
         const { data, requestId } = message;
-        if (!sudoRequestValidator(data)) {
-          throw new Error(`Invalid sudo request from plugin. ${JSON.stringify(sudoRequestValidator.errors, null, 2)}`);
+        if (!commandRequestValidator(data)) {
+          throw new Error(`Invalid sudo request from plugin. ${JSON.stringify(commandRequestValidator.errors, null, 2)}`);
         }
 
         cp.send(<IpcMessageV2>{
@@ -154,60 +160,4 @@ export class PluginProcess {
     })
   }
   
-}
-
-type CodifySpawnOptions = {
-  cwd?: string;
-  throws?: boolean,
-} & Omit<SpawnOptions, 'detached' | 'shell' | 'stdio'>
-
-/**
- *
- * @param cmd Command to run. Ex: `rm -rf`
- * @param opts Options for spawn
- *
- * @see promiseSpawn
- * @see spawn
- *
- * @returns SpawnResult { status: SUCCESS | ERROR; data: string }
- */
-async function sudoSpawn(
-  cmd: string,
-  opts: CodifySpawnOptions,
-): Promise<{ data: string, status: SpawnStatus }> {
-  return new Promise((resolve) => {
-    const output: string[] = [];
-
-    const _cmd = `sudo ${cmd}`;
-
-    // Source start up shells to emulate a users environment vs. a non-interactive non-login shell script
-    // Ignore all stdin
-    const _process = spawn(`source ~/.zshrc; ${_cmd}`, [], {
-      ...opts,
-      shell: 'zsh',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    const { stderr, stdout } = _process
-    stdout.setEncoding('utf8');
-    stderr.setEncoding('utf8');
-
-    stdout.on('data', (data) => {
-      output.push(data.toString());
-    })
-
-    stderr.on('data', (data) => {
-      output.push(data.toString());
-    })
-
-    stdout.pipe(process.stdout);
-    stderr.pipe(process.stderr);
-
-    _process.on('close', (code) => {
-      resolve({
-        data: output.join(''),
-        status: code === 0 ? SpawnStatus.SUCCESS : SpawnStatus.ERROR,
-      })
-    })
-  })
 }

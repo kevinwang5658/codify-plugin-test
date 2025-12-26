@@ -91,6 +91,7 @@ export class PluginTester {
     if (!options?.skipImport) {
       const importPlugin = new PluginProcess(pluginPath);
       try {
+        await importPlugin.initialize();
         console.info(chalk.cyan('Testing import...'))
 
         const importResults = [];
@@ -113,6 +114,7 @@ export class PluginTester {
       const modifyPlugin = new PluginProcess(pluginPath);
 
       try {
+        await modifyPlugin.initialize();
         console.info(chalk.cyan('Testing modify...'))
 
         const modifyPlans = [];
@@ -164,6 +166,7 @@ ${JSON.stringify(modifyPlans, null, 2)}`)
     const destroyPlugin = new PluginProcess(pluginPath);
 
     try {
+      await destroyPlugin.initialize();
       console.info(chalk.cyan('Testing destroy...'))
 
       const plans = [];
