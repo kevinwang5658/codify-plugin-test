@@ -1,6 +1,6 @@
 {
   "name": "codify-plugin-test",
-  "version": "0.0.53",
+  "version": "0.0.53-beta11",
   "description": "",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -16,12 +16,14 @@
   "dependencies": {
     "ajv": "^8.12.0",
     "ajv-formats": "^3.0.1",
-    "codify-schemas": "1.0.77",
+    "codify-schemas": "1.0.86-beta7",
     "lodash.matches": "^4.6.0",
     "lodash.differencewith": "4.5.0",
     "lodash.unionby": "^4.8.0",
     "nanoid": "^5.0.9",
-    "chalk": "^5.4.1"
+    "chalk": "^5.4.1",
+    "@homebridge/node-pty-prebuilt-multiarch": "^0.13.1",
+    "strip-ansi": "^7.1.2"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
@@ -37,7 +39,7 @@
     "tsx": "^4.7.3",
     "typescript": "5.3.3",
     "vitest": "^1.4.0",
-    "codify-plugin-lib": "1.0.171"
+    "codify-plugin-lib": "1.0.182-beta9"
   },
   "engines": {
     "node": ">=18.0.0"

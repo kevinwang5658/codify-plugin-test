@@ -8,7 +8,7 @@ import {
 import unionBy from 'lodash.unionby';
 
 import { PluginProcess } from './plugin-process.js';
-import { splitUserConfig } from './utils.js';
+import { getResourceOs, splitUserConfig } from './utils.js';
 
 export class PluginTester {
   static async fullTest(
@@ -26,8 +26,12 @@ export class PluginTester {
         validateModify?: (plans: PlanResponseData[]) => Promise<void> | void,
       }
   }): Promise<void> {
-    const ids = configs.map((c) => c.name ? `${c.type}.${c.name}` : c.type).join(', ')
-    console.info(chalk.cyan(`Starting full test of [ ${ids} ]...`))
+    configs = configs.filter((c) => !c.os || c.os.includes(getResourceOs()));
+    const ids = configs
+      .map((c) => `${c.type}${c.name ? `.${c.name}` : ''}`)
+      .join(', ')
+    console.info(chalk.cyan(`Starting full test of [ ${ids} ]...`));
+
 
     const {
       skipUninstall = false,
