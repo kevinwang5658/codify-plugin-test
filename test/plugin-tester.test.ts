@@ -313,6 +313,17 @@ describe('Plugin tester integration tests', () => {
     }
   })
 
+  it('Can filter out unsupported configs based on OS', { timeout: 300000 }, async () => {
+      await PluginTester.fullTest(pluginPath, [{
+        type: 'windows-only',
+      }], {
+        validatePlan(plan) {
+          expect(plan.length).to.eq(0);
+        }
+      });
+  });
+
+
 
   // it('Can uninstall two resources with the same type', async () => {
   //   await plugin.fullTest([{

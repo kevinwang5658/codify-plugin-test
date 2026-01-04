@@ -18,6 +18,10 @@ export interface SpawnOptions {
   stdin?: boolean,
 }
 
+export function testSpawn(cmd: string, options?: SpawnOptions): Promise<SpawnResult> {
+  return spawnSafe(cmd, { interactive: true, ...options,  });
+}
+
 export function spawnSafe(cmd: string, options?: SpawnOptions): Promise<SpawnResult> {
   if (cmd.toLowerCase().includes('sudo')) {
     throw new Error('Command must not include sudo')

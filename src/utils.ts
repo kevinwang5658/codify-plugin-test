@@ -20,7 +20,7 @@ export function splitUserConfig<T extends StringIndexedObject>(
   };
 }
 
-export function getResourceOs(): ResourceOs{
+export function getPlatformOs(): ResourceOs{
   const currOs = os.platform();
   switch (currOs) {
     case 'darwin': {

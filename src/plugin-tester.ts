@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import {
-  ImportResponseData,
+  ImportResponseData, OS,
   PlanResponseData,
   ResourceConfig,
   ResourceOperation,
@@ -8,7 +8,8 @@ import {
 import unionBy from 'lodash.unionby';
 
 import { PluginProcess } from './plugin-process.js';
-import { getResourceOs, splitUserConfig } from './utils.js';
+import { getPlatformOs, splitUserConfig } from './utils.js';
+import os from 'node:os';
 
 export class PluginTester {
   static async fullTest(
@@ -26,7 +27,7 @@ export class PluginTester {
         validateModify?: (plans: PlanResponseData[]) => Promise<void> | void,
       }
   }): Promise<void> {
-    configs = configs.filter((c) => !c.os || c.os.includes(getResourceOs()));
+    configs = configs.filter((c) => !c.os || c.os.includes(getPlatformOs()));
     const ids = configs
       .map((c) => `${c.type}${c.name ? `.${c.name}` : ''}`)
       .join(', ')
@@ -49,6 +50,8 @@ export class PluginTester {
       if (unsupportedConfigs.length > 0) {
         throw new Error(`The plugin does not support the following configs supplied:\n ${JSON.stringify(unsupportedConfigs, null, 2)}\n Initialize result: ${JSON.stringify(initializeResult)}`)
       }
+
+      configs = configs.filter((c) => initializeResult.resourceDefinitions.find((rd) => rd.type === c.type)?.operatingSystems?.includes(os.platform() as OS));
 
       console.info(chalk.cyan('Testing validate...'))
       const validate = await plugin.validate({ configs: configs.map((c) => {

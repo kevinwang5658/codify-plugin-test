@@ -1,14 +1,14 @@
 import {
   CreatePlan,
-  DestroyPlan, ModifyPlan,
+  DestroyPlan,
+  ModifyPlan,
   ParameterChange,
   Plugin,
   Resource,
   ResourceSettings,
   runPlugin
 } from 'codify-plugin-lib';
-import { StringIndexedObject } from 'codify-schemas';
-import { b } from 'vitest/dist/reporters-yx5ZTtEV';
+import { OS, StringIndexedObject } from 'codify-schemas';
 import * as fs from 'node:fs';
 
 export interface TestConfig extends StringIndexedObject {
@@ -27,6 +27,7 @@ export class TestResource extends Resource<TestConfig> {
   getSettings(): ResourceSettings<TestConfig> {
     return {
       id: 'test',
+      operatingSystems: [OS.Linux, OS.Darwin],
       allowMultiple: true,
     };
   }
@@ -54,6 +55,7 @@ export class TestResource2 extends Resource<TestConfig2> {
   getSettings(): ResourceSettings<TestConfig2> {
     return {
       id: 'test2',
+      operatingSystems: [OS.Linux, OS.Darwin],
       parameterSettings: {
         propB: { type: 'array' }
       }
@@ -82,7 +84,8 @@ export class TestUninstallResource extends Resource<TestConfig> {
   first = true;
   getSettings(): ResourceSettings<TestConfig> {
     return {
-      id: 'test-uninstall'
+      id: 'test-uninstall',
+      operatingSystems: [OS.Linux, OS.Darwin],
     }
   }
 
@@ -106,6 +109,7 @@ export class TestModifyResource extends Resource<TestConfig> {
   getSettings(): ResourceSettings<TestConfig> {
     return {
       id: 'test-modify',
+      operatingSystems: [OS.Linux, OS.Darwin],
       parameterSettings: {
         propA: { type: 'string', canModify: true },
         propB: { type: 'string', canModify: true },
@@ -141,6 +145,7 @@ export class TestDestroyResource extends Resource<TestConfig> {
   getSettings(): ResourceSettings<TestConfig> {
     return {
       id: 'test-destroy',
+      operatingSystems: [OS.Linux, OS.Darwin],
     }
   }
 
@@ -165,6 +170,29 @@ export class TestDestroyResource extends Resource<TestConfig> {
   }
 }
 
+export class WindowsOnlyResource extends Resource<TestConfig> {
+  private name: string;
+
+  getSettings(): ResourceSettings<TestConfig> {
+    return {
+      id: 'windows-only',
+      operatingSystems: [OS.Windows],
+    }
+  }
+
+  async refresh(parameters: Partial<TestConfig>): Promise<Array<Partial<TestConfig>> | Partial<TestConfig> | null> {
+    return {};
+  }
+
+  async modify(pc: ParameterChange<TestConfig>, plan: ModifyPlan<TestConfig>): Promise<void> {
+    return super.modify(pc, plan);
+  }
+
+  async create(plan: CreatePlan<TestConfig>): Promise<void> {}
+
+  async destroy(plan: DestroyPlan<TestConfig>): Promise<void> {}
+}
+
 export class TestDestroyResource2 extends TestDestroyResource {
   getSettings(): ResourceSettings<TestConfig> {
     return {
@@ -181,6 +209,7 @@ runPlugin(Plugin.create(
     new TestUninstallResource(),
     new TestModifyResource(),
     new TestDestroyResource(),
-    new TestDestroyResource2()
+    new TestDestroyResource2(),
+    new WindowsOnlyResource(),
   ]
 ));
