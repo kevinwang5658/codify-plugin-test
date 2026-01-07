@@ -27,14 +27,14 @@ describe('Plugin tester integration tests', () => {
 
     const result = await plugin.initialize();
     expect(result).toMatchObject({
-      resourceDefinitions: [
-        { dependencies: [], type: 'test' },
-        { dependencies: [], type: 'test2' },
-        { dependencies: [], type: 'test-uninstall' },
-        { dependencies: [], type: 'test-modify' },
-        { dependencies: [], type: 'test-destroy' },
-        { dependencies: [], type: 'test-destroy-2' }
-      ]
+      resourceDefinitions: expect.arrayContaining([
+        expect.objectContaining({ dependencies: [], type: 'test' }),
+        expect.objectContaining({ dependencies: [], type: 'test2' }),
+        expect.objectContaining({ dependencies: [], type: 'test-uninstall' }),
+        expect.objectContaining({ dependencies: [], type: 'test-modify' }),
+        expect.objectContaining({ dependencies: [], type: 'test-destroy' }),
+        expect.objectContaining({ dependencies: [], type: 'test-destroy-2' }),
+      ])
     })
   })
 

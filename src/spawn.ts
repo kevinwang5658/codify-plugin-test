@@ -27,7 +27,7 @@ export function spawnSafe(cmd: string, options?: SpawnOptions): Promise<SpawnRes
     throw new Error('Command must not include sudo')
   }
 
-  process.stdout.write(`Running command: ${options?.requiresRoot ? 'sudo' : ''} ${cmd}` + (options?.cwd ? `(${options?.cwd})` : ''))
+  console.log(`Running command: ${options?.requiresRoot ? 'sudo' : ''} ${cmd}` + (options?.cwd ? `(${options?.cwd})` : ''))
 
   return new Promise((resolve) => {
     const output: string[] = [];
@@ -44,7 +44,7 @@ export function spawnSafe(cmd: string, options?: SpawnOptions): Promise<SpawnRes
     }
 
     // Initial terminal dimensions
-    const initialCols = process.stdout.columns ?? 80;
+    const initialCols = 10_000; // Set to a large value to prevent wrapping
     const initialRows = process.stdout.rows ?? 24;
 
     const command = options?.requiresRoot ? `sudo ${cmd}` : cmd;

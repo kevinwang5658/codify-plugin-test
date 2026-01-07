@@ -26,7 +26,7 @@ export class PluginTester {
         modifiedConfigs: ResourceConfig[],
         validateModify?: (plans: PlanResponseData[]) => Promise<void> | void,
       }
-  }): Promise<void> {
+    }): Promise<void> {
     configs = configs.filter((c) => !c.os || c.os.includes(getPlatformOs()));
     const ids = configs
       .map((c) => `${c.type}${c.name ? `.${c.name}` : ''}`)
@@ -51,13 +51,15 @@ export class PluginTester {
         throw new Error(`The plugin does not support the following configs supplied:\n ${JSON.stringify(unsupportedConfigs, null, 2)}\n Initialize result: ${JSON.stringify(initializeResult)}`)
       }
 
-      configs = configs.filter((c) => initializeResult.resourceDefinitions.find((rd) => rd.type === c.type)?.operatingSystems?.includes(os.platform() as OS));
+      // configs = configs.filter((c) => initializeResult.resourceDefinitions.find((rd) => rd.type === c.type)?.operatingSystems?.includes(os.platform() as OS));
 
       console.info(chalk.cyan('Testing validate...'))
-      const validate = await plugin.validate({ configs: configs.map((c) => {
-        const { coreParameters, parameters } = splitUserConfig(c)
-        return { core: coreParameters, parameters };
-      }) });
+      const validate = await plugin.validate({
+        configs: configs.map((c) => {
+          const { coreParameters, parameters } = splitUserConfig(c)
+          return { core: coreParameters, parameters };
+        })
+      });
 
       const invalidConfigs = validate.resourceValidations.filter((v) => !v.isValid)
       if (invalidConfigs.length > 0) {
@@ -68,7 +70,7 @@ export class PluginTester {
       const plans = [];
       for (const config of configs) {
         const { coreParameters, parameters } = splitUserConfig(config);
-        
+
         plans.push(await plugin.plan({
           core: coreParameters,
           desired: parameters,
@@ -127,7 +129,7 @@ export class PluginTester {
         const modifyPlans = [];
         for (const config of options.testModify.modifiedConfigs) {
           const { coreParameters, parameters } = splitUserConfig(config);
-          
+
           modifyPlans.push(await modifyPlugin.plan({
             core: coreParameters,
             desired: parameters,
@@ -167,6 +169,59 @@ ${JSON.stringify(modifyPlans, null, 2)}`)
     }
   }
 
+  static async install(pluginPath: string, configs: ResourceConfig[]) {
+    const plugin = new PluginProcess(pluginPath);
+
+    try {
+      console.info(chalk.cyan('Testing initialization...'))
+      const initializeResult = await plugin.initialize();
+
+      const unsupportedConfigs = configs.filter((c) =>
+        !initializeResult.resourceDefinitions.some((rd) => rd.type === c.type)
+      )
+      if (unsupportedConfigs.length > 0) {
+        throw new Error(`The plugin does not support the following configs supplied:\n ${JSON.stringify(unsupportedConfigs, null, 2)}\n Initialize result: ${JSON.stringify(initializeResult)}`)
+      }
+
+      // configs = configs.filter((c) => initializeResult.resourceDefinitions.find((rd) => rd.type === c.type)?.operatingSystems?.includes(os.platform() as OS));
+
+      console.info(chalk.cyan('Testing validate...'))
+      const validate = await plugin.validate({
+        configs: configs.map((c) => {
+          const { coreParameters, parameters } = splitUserConfig(c)
+          return { core: coreParameters, parameters };
+        })
+      });
+
+      const invalidConfigs = validate.resourceValidations.filter((v) => !v.isValid)
+      if (invalidConfigs.length > 0) {
+        throw new Error(`The following configs did not validate:\n ${JSON.stringify(invalidConfigs, null, 2)}`)
+      }
+
+      console.info(chalk.cyan('Testing plan...'))
+      const plans = [];
+      for (const config of configs) {
+        const { coreParameters, parameters } = splitUserConfig(config);
+
+        plans.push(await plugin.plan({
+          core: coreParameters,
+          desired: parameters,
+          isStateful: false,
+          state: undefined,
+        }));
+      }
+
+      console.info(chalk.cyan('Testing apply...'))
+      for (const plan of plans) {
+        await plugin.apply({
+          planId: plan.planId
+        });
+      }
+    } finally {
+      plugin.kill();
+    }
+  }
+
   static async uninstall(pluginPath: string, configs: ResourceConfig[], options?: {
     validateDestroy?: (plans: PlanResponseData[]) => Promise<void> | void
   }) {
@@ -179,7 +234,7 @@ ${JSON.stringify(modifyPlans, null, 2)}`)
       const plans = [];
       for (const config of configs) {
         const { coreParameters, parameters } = splitUserConfig(config);
-        
+
         plans.push(await destroyPlugin.plan({
           core: coreParameters,
           isStateful: true,
@@ -213,7 +268,9 @@ ${JSON.stringify(modifyPlans, null, 2)}`)
     for (const type of typeSet) {
       const sameTypeConfigs = configs.filter((c) => c.type === type);
       if (sameTypeConfigs.length > 1) {
-        sameTypeConfigs.forEach((c, idx) => { c.name = c.name ?? idx.toString() });
+        sameTypeConfigs.forEach((c, idx) => {
+          c.name = c.name ?? idx.toString()
+        });
       }
 
       configsWithNames.push(...sameTypeConfigs);

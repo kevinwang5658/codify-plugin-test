@@ -21,7 +21,7 @@ import * as os from 'node:os';
 import path from 'node:path';
 
 import { spawnSafe } from './spawn.js';
-import { CodifyTestUtils } from './test-utils.js';
+import { TestUtils } from './test-utils.js';
 
 const ajv = new Ajv.default({
   strict: true
@@ -64,7 +64,7 @@ export class PluginProcess {
   }
 
   async initialize(): Promise<InitializeResponseData> {
-    return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
+    return TestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'initialize',
       data: { verbosityLevel: 3 },
       requestId: nanoid(6),
@@ -72,7 +72,7 @@ export class PluginProcess {
   }
 
   async validate(data: ValidateRequestData): Promise<ValidateResponseData> {
-    return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
+    return TestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'validate',
       data,
       requestId: nanoid(6),
@@ -80,7 +80,7 @@ export class PluginProcess {
   }
 
   async plan(data: PlanRequestData): Promise<PlanResponseData> {
-    return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
+    return TestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'plan',
       data,
       requestId: nanoid(6),
@@ -88,7 +88,7 @@ export class PluginProcess {
   }
 
   async apply(data: ApplyRequestData): Promise<void> {
-    return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
+    return TestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'apply',
       data,
       requestId: nanoid(6),
@@ -96,7 +96,7 @@ export class PluginProcess {
   }
 
   async import(data: ImportRequestData): Promise<ImportResponseData> {
-    return CodifyTestUtils.sendMessageAndAwaitResponse(this.childProcess, {
+    return TestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'import',
       data,
       requestId: nanoid(6),

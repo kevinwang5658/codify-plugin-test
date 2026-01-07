@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { ChildProcess } from 'node:child_process';
 import { Readable } from 'stream';
-import { CodifyTestUtils } from './test-utils.js';
+import { TestUtils } from './test-utils.js';
 import { describe, expect, it, vi } from 'vitest';
 import { MessageStatus } from 'codify-schemas';
 import { nanoid } from 'nanoid';
@@ -22,7 +22,7 @@ describe('Test Utils tests', async () => {
     const sendMock = vi.spyOn(process, 'send');
     const requestId = nanoid(6);
 
-    CodifyTestUtils.sendMessageAndAwaitResponse(process, { cmd: 'message', data: 'data', requestId })
+    TestUtils.sendMessageAndAwaitResponse(process, { cmd: 'message', data: 'data', requestId })
 
     expect(sendMock.mock.calls.length).to.eq(1);
     expect(sendMock.mock.calls[0][0]).to.deep.eq({ cmd: 'message', data: 'data', requestId });
@@ -38,7 +38,7 @@ describe('Test Utils tests', async () => {
         // Note that the response must end in _Response. In accordance to the message schema rules.
         process.emit('message', { cmd: 'message_Response', status: MessageStatus.SUCCESS, data: 'data', requestId })
       })(),
-      CodifyTestUtils.sendMessageAndAwaitResponse(process, { cmd: 'message', data: 'data', requestId }),
+      TestUtils.sendMessageAndAwaitResponse(process, { cmd: 'message', data: 'data', requestId }),
     ]);
 
     expect(result[1]).to.eq('data')
@@ -54,7 +54,7 @@ describe('Test Utils tests', async () => {
         // Note that the response must end in _Response. In accordance to the message schema rules.
         process.emit('message', { cmd: 'message_Response', status: MessageStatus.ERROR, data: 'error message', requestId })
       })(),
-      CodifyTestUtils.sendMessageAndAwaitResponse(process, { cmd: 'message', data: 'data', requestId }),
+      TestUtils.sendMessageAndAwaitResponse(process, { cmd: 'message', data: 'data', requestId }),
     ])).rejects.toThrowError(new Error('error message'))
   });
 
@@ -70,7 +70,7 @@ describe('Test Utils tests', async () => {
         process.emit('message', { cmd: 'randomMessage2', status: MessageStatus.SUCCESS, data: 'message2', requestId: nanoid(6) })
         process.emit('message', { cmd: 'message_Response', status: MessageStatus.SUCCESS, data: 'data', requestId  })
       })(),
-      CodifyTestUtils.sendMessageAndAwaitResponse(process, { cmd: 'message', data: 'data', requestId }),
+      TestUtils.sendMessageAndAwaitResponse(process, { cmd: 'message', data: 'data', requestId }),
     ]);
 
     // Only the final _Response message should be returned.
