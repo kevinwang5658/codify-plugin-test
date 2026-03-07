@@ -16,6 +16,10 @@
     "plugin-testing"
   ],
   "author": "Kevin Wang <team@codifycli.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codifycli/codify-plugin-test.git"
+  },
   "license": "ISC",
   "scripts": {
     "test": "vitest",
