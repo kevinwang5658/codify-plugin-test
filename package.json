@@ -1,12 +1,21 @@
 {
   "name": "@codifycli/plugin-test",
   "version": "1.0.0-beta1",
-  "description": "",
+  "description": "Testing framework for Codify plugins with complete lifecycle testing, IPC communication, and cross-platform support",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "type": "module",
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "codify",
+    "plugin",
+    "testing",
+    "test",
+    "framework",
+    "ipc",
+    "integration-testing",
+    "plugin-testing"
+  ],
+  "author": "Kevin Wang <team@codifycli.com>",
   "license": "ISC",
   "scripts": {
     "test": "vitest",
