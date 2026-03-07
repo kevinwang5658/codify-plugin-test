@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PluginTester } from '../src/index.js';
 import path from 'node:path';
-import { ResourceOperation } from 'codify-schemas/src/types/index.js';
+import { ResourceOperation } from '@codifycli/schemas';
 import deepMatches from 'lodash.matches';
 import differenceWith from 'lodash.differencewith';
 import { PluginProcess } from '../src/plugin-process';
 import * as fs from 'node:fs';
+import { ResourceOs } from '@codifycli/schemas';
 
 const pluginPath = path.join(__dirname, './test-plugin.ts');
 
@@ -316,14 +317,13 @@ describe('Plugin tester integration tests', () => {
   it('Can filter out unsupported configs based on OS', { timeout: 300000 }, async () => {
       await PluginTester.fullTest(pluginPath, [{
         type: 'windows-only',
+        os: [ResourceOs.Windows],
       }], {
         validatePlan(plan) {
           expect(plan.length).to.eq(0);
         }
       });
   });
-
-
 
   // it('Can uninstall two resources with the same type', async () => {
   //   await plugin.fullTest([{

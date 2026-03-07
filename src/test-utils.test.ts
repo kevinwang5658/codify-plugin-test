@@ -3,7 +3,7 @@ import { ChildProcess } from 'node:child_process';
 import { Readable } from 'stream';
 import { TestUtils } from './test-utils.js';
 import { describe, expect, it, vi } from 'vitest';
-import { MessageStatus } from 'codify-schemas';
+import { MessageStatus } from '@codifycli/schemas';
 import { nanoid } from 'nanoid';
 
 describe('Test Utils tests', async () => {

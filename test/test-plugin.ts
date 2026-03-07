@@ -7,8 +7,8 @@ import {
   Resource,
   ResourceSettings,
   runPlugin
-} from 'codify-plugin-lib';
-import { OS, StringIndexedObject } from 'codify-schemas';
+} from '@codifycli/plugin-core';
+import { OS, StringIndexedObject } from '@codifycli/schemas';
 import * as fs from 'node:fs';
 
 export interface TestConfig extends StringIndexedObject {

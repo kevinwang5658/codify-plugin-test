@@ -1,4 +1,4 @@
-import { ResourceConfig, ResourceOs, StringIndexedObject } from 'codify-schemas';
+import { ResourceConfig, ResourceOs, StringIndexedObject } from '@codifycli/schemas';
 import os from 'node:os';
 
 export function splitUserConfig<T extends StringIndexedObject>(

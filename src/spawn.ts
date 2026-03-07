@@ -1,5 +1,5 @@
+import { SpawnStatus } from '@codifycli/schemas';
 import * as pty from '@homebridge/node-pty-prebuilt-multiarch';
-import { SpawnStatus } from 'codify-schemas';
 import stripAnsi from 'strip-ansi';
 
 import { Shell, ShellUtils } from './shell.js';
@@ -16,6 +16,7 @@ export interface SpawnOptions {
   interactive?: boolean,
   requiresRoot?: boolean,
   stdin?: boolean,
+  throws?: boolean,
 }
 
 export function testSpawn(cmd: string, options?: SpawnOptions): Promise<SpawnResult> {
@@ -29,7 +30,7 @@ export function spawnSafe(cmd: string, options?: SpawnOptions): Promise<SpawnRes
 
   console.log(`Running command: ${options?.requiresRoot ? 'sudo' : ''} ${cmd}` + (options?.cwd ? `(${options?.cwd})` : ''))
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const output: string[] = [];
     const historyIgnore = ShellUtils.getShell() === Shell.ZSH ? { HISTORY_IGNORE: '*' } : { HISTIGNORE: '*' };
 
@@ -83,6 +84,11 @@ export function spawnSafe(cmd: string, options?: SpawnOptions): Promise<SpawnRes
       process.stdout.off('resize', resizeListener);
       if (options?.stdin) {
         process.stdin.off('data', stdinListener);
+      }
+
+      if (options?.throws && result.exitCode !== 0) {
+        reject(new Error(stripAnsi(output.join('\n').trim())));
+        return;
       }
 
       resolve({

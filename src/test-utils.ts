@@ -1,5 +1,5 @@
 import Ajv from 'ajv';
-import { IpcMessageSchema, IpcMessageV2, MessageStatus, ResourceOs, SpawnStatus } from 'codify-schemas';
+import { IpcMessageSchema, IpcMessageV2, MessageStatus, ResourceOs, SpawnStatus } from '@codifycli/schemas';
 import { ChildProcess } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';

@@ -1,15 +1,14 @@
-import chalk from 'chalk';
 import {
-  ImportResponseData, OS,
+  ImportResponseData,
   PlanResponseData,
   ResourceConfig,
   ResourceOperation,
-} from 'codify-schemas';
+} from '@codifycli/schemas';
+import chalk from 'chalk';
 import unionBy from 'lodash.unionby';
 
 import { PluginProcess } from './plugin-process.js';
 import { getPlatformOs, splitUserConfig } from './utils.js';
-import os from 'node:os';
 
 export class PluginTester {
   static async fullTest(
