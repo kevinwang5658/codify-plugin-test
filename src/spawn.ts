@@ -64,37 +64,32 @@ export function spawnSafe(cmd: string, options?: SpawnOptions): Promise<SpawnRes
       output.push(data.toString());
     })
 
-    const resizeListener = () => {
-      const { columns, rows } = process.stdout;
-      mPty.resize(columns, rows);
-    }
 
     const stdinListener = (data: any) => {
       // console.log('stdinListener', data);
       mPty.write(data.toString());
     }
 
-    // Listen to resize events for the terminal window;
-    process.stdout.on('resize', resizeListener);
     if (options?.stdin) {
       process.stdin.on('data', stdinListener)
     }
 
     mPty.onExit((result) => {
-      process.stdout.off('resize', resizeListener);
       if (options?.stdin) {
         process.stdin.off('data', stdinListener);
       }
 
+      const raw = stripAnsi(output.join('')).replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+
       if (options?.throws && result.exitCode !== 0) {
-        reject(new Error(stripAnsi(output.join('\n').trim())));
+        reject(new Error(raw));
         return;
       }
 
       resolve({
         status: result.exitCode === 0 ? SpawnStatus.SUCCESS : SpawnStatus.ERROR,
         exitCode: result.exitCode,
-        data: stripAnsi(output.join('\n').trim()),
+        data: raw,
       })
     })
   })
