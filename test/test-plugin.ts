@@ -1,6 +1,6 @@
 import {
   CreatePlan,
-  DestroyPlan,
+  DestroyPlan, ExampleConfig,
   ModifyPlan,
   ParameterChange,
   Plugin,
@@ -22,6 +22,25 @@ export interface TestConfig2 extends StringIndexedObject {
   propB: string[];
 }
 
+const defaultConfig: Partial<TestConfig> = {
+  propA: ''
+}
+
+const example1: ExampleConfig = {
+  configs: [
+    { type: 'test', propA: 'abc', propB: 6, propC: 'def' }
+  ],
+  title: 'Example 1'
+}
+
+const example2: ExampleConfig = {
+  configs: [
+    { type: 'test', propA: 'abc', propB: 6, propC: 'def', propD: 'asda' },
+    { type: 'test2', propA: 'ghi', propB: ['a', 'b', 'c'] }
+  ],
+  title: 'Example 2',
+  description: 'ABCDEF'
+}
 
 export class TestResource extends Resource<TestConfig> {
   getSettings(): ResourceSettings<TestConfig> {
@@ -29,6 +48,11 @@ export class TestResource extends Resource<TestConfig> {
       id: 'test',
       operatingSystems: [OS.Linux, OS.Darwin],
       allowMultiple: true,
+      defaultConfig,
+      exampleConfigs: {
+        example1,
+        example2
+      }
     };
   }
 
@@ -58,6 +82,10 @@ export class TestResource2 extends Resource<TestConfig2> {
       operatingSystems: [OS.Linux, OS.Darwin],
       parameterSettings: {
         propB: { type: 'array' }
+      },
+      exampleConfigs: {
+        example1,
+        example2
       }
     };
   }
@@ -82,6 +110,7 @@ export class TestResource2 extends Resource<TestConfig2> {
 
 export class TestUninstallResource extends Resource<TestConfig> {
   first = true;
+
   getSettings(): ResourceSettings<TestConfig> {
     return {
       id: 'test-uninstall',
@@ -134,9 +163,11 @@ export class TestModifyResource extends Resource<TestConfig> {
     return super.modify(pc, plan);
   }
 
-  async create(plan: CreatePlan<TestConfig>): Promise<void> {}
+  async create(plan: CreatePlan<TestConfig>): Promise<void> {
+  }
 
-  async destroy(plan: DestroyPlan<TestConfig>): Promise<void> {}
+  async destroy(plan: DestroyPlan<TestConfig>): Promise<void> {
+  }
 }
 
 export class TestDestroyResource extends Resource<TestConfig> {
@@ -188,9 +219,11 @@ export class WindowsOnlyResource extends Resource<TestConfig> {
     return super.modify(pc, plan);
   }
 
-  async create(plan: CreatePlan<TestConfig>): Promise<void> {}
+  async create(plan: CreatePlan<TestConfig>): Promise<void> {
+  }
 
-  async destroy(plan: DestroyPlan<TestConfig>): Promise<void> {}
+  async destroy(plan: DestroyPlan<TestConfig>): Promise<void> {
+  }
 }
 
 export class TestDestroyResource2 extends TestDestroyResource {

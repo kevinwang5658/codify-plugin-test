@@ -46,8 +46,11 @@ export class PluginTester {
     }
 
     const plugin = new PluginProcess(pluginPath);
+
     try {
       await this.initializeAndValidate(plugin, configs);
+      
+      await this.validateExampleAndDefaultConfigs(plugin, configs);
 
       console.info(chalk.cyan('Testing plan...'))
       const plans = await this.planConfigs(plugin, configs);
@@ -215,7 +218,79 @@ export class PluginTester {
 
     const invalidConfigs = validate.resourceValidations.filter((v) => !v.isValid)
     if (invalidConfigs.length > 0) {
-      throw new Error(`The following configs did not validate:\n ${JSON.stringify(invalidConfigs, null, 2)}`)
+      const invalidWithConfigs = invalidConfigs.map((v) => ({
+        config: configs.find((c) => c.type === v.resourceType && (!v.resourceName || c.name === v.resourceName)),
+        validation: v,
+      }));
+      throw new Error(`The following configs did not validate:\n ${JSON.stringify(invalidWithConfigs, null, 2)}`)
+    }
+  }
+
+  private static async validateExampleAndDefaultConfigs(
+    plugin: PluginProcess,
+    configs: ResourceConfig[],
+  ): Promise<void> {
+    console.info(chalk.cyan('Validating examples and default config...'))
+    const uniqueTypes = [...new Set(configs.map((c) => c.type))];
+
+    const errors: string[] = [];
+
+    for (const type of uniqueTypes) {
+      const { defaultConfig, exampleConfigs } = await plugin.getResourceInfo({ type });
+
+      // Validate exampleConfigs — these should be fully valid configs
+      const exampleEntries: Array<[string, Array<Record<string, unknown>>]> = [];
+      if (exampleConfigs?.example1?.configs) exampleEntries.push(['exampleConfigs.example1', exampleConfigs.example1.configs as Array<Record<string, unknown>>]);
+      if (exampleConfigs?.example2?.configs) exampleEntries.push(['exampleConfigs.example2', exampleConfigs.example2.configs as Array<Record<string, unknown>>]);
+
+      for (const [label, exampleConfigList] of exampleEntries) {
+        for (const [idx, exampleConfig] of exampleConfigList.entries()) {
+          const configLabel = `resource '${type}' ${label}[${idx}]`;
+          await this.validateSingleExampleConfig(plugin, configLabel, exampleConfig, errors);
+        }
+      }
+
+      // Validate defaultConfig — partial config, so only warn on failure
+      if (defaultConfig) {
+        try {
+          const validate = await plugin.validate({
+            configs: [{ core: { type }, parameters: defaultConfig }]
+          });
+          const invalid = validate.resourceValidations.filter((v) => !v.isValid);
+          if (invalid.length > 0) {
+            console.warn(chalk.yellow(`Resource '${type}' defaultConfig failed validation (this may be expected for partial configs):\n${JSON.stringify(invalid, null, 2)}`));
+          }
+        } catch (error) {
+          console.warn(chalk.yellow(`Resource '${type}' defaultConfig could not be validated: ${error}`));
+        }
+      }
+    }
+
+    if (errors.length > 0) {
+      const message = errors.length === 1
+        ? errors[0]
+        : `Multiple example config validation failures:\n\n${errors.map((e, i) => `[${i + 1}] ${e}`).join('\n\n')}`;
+      throw new Error(message);
+    }
+  }
+
+  private static async validateSingleExampleConfig(
+    plugin: PluginProcess,
+    label: string,
+    exampleConfig: Record<string, unknown>,
+    errors: string[],
+  ): Promise<void> {
+    try {
+      const { coreParameters, parameters } = splitUserConfig(exampleConfig as ResourceConfig);
+      const validate = await plugin.validate({
+        configs: [{ core: coreParameters, parameters }]
+      });
+      const invalid = validate.resourceValidations.filter((v) => !v.isValid);
+      if (invalid.length > 0) {
+        errors.push(`${label} failed validation:\nConfig: ${JSON.stringify(exampleConfig, null, 2)}\nErrors: ${JSON.stringify(invalid, null, 2)}`);
+      }
+    } catch (error) {
+      errors.push(`${label} could not be validated:\nConfig: ${JSON.stringify(exampleConfig, null, 2)}\nError: ${error}`);
     }
   }
 

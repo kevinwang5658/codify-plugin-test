@@ -2,6 +2,8 @@ import {
   ApplyRequestData,
   CommandRequestData,
   CommandRequestDataSchema,
+  GetResourceInfoRequestData,
+  GetResourceInfoResponseData,
   ImportRequestData,
   ImportResponseData,
   InitializeResponseData,
@@ -96,6 +98,14 @@ export class PluginProcess {
   async import(data: ImportRequestData): Promise<ImportResponseData> {
     return TestUtils.sendMessageAndAwaitResponse(this.childProcess, {
       cmd: 'import',
+      data,
+      requestId: nanoid(6),
+    });
+  }
+
+  async getResourceInfo(data: GetResourceInfoRequestData): Promise<GetResourceInfoResponseData> {
+    return TestUtils.sendMessageAndAwaitResponse(this.childProcess, {
+      cmd: 'getResourceInfo',
       data,
       requestId: nanoid(6),
     });
